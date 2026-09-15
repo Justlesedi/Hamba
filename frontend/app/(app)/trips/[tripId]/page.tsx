@@ -56,7 +56,7 @@ export default async function Page({
         </div>
       </Card>
       <p className="text-sm text-muted">
-        Itinerary, stays, flights, and activities will be added next.
+        Open Plan to see activities within 30 km on a map.
       </p>
     </section>
   );

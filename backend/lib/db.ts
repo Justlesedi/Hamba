@@ -1,6 +1,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { DatabaseSync } from "node:sqlite";
+import { seedActivities } from "./activities/seed";
 
 function repoRoot() {
   if (process.cwd().endsWith("frontend") || process.cwd().endsWith("backend")) {
@@ -40,4 +41,22 @@ db.exec(`
   );
 
   CREATE INDEX IF NOT EXISTS trips_userId ON trips(userId);
+
+  CREATE TABLE IF NOT EXISTS activities (
+    id TEXT PRIMARY KEY,
+    name TEXT NOT NULL,
+    latitude REAL NOT NULL,
+    longitude REAL NOT NULL,
+    company TEXT NOT NULL,
+    operatingHours TEXT NOT NULL,
+    area TEXT NOT NULL
+  );
+
+  CREATE TABLE IF NOT EXISTS geocode_cache (
+    query TEXT PRIMARY KEY,
+    lat REAL NOT NULL,
+    lng REAL NOT NULL
+  );
 `);
+
+seedActivities(db);

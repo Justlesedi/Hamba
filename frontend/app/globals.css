@@ -27,3 +27,25 @@ body {
   color: var(--foreground);
   font-family: var(--font-geist-sans), Arial, Helvetica, sans-serif;
 }
+
+.hamba-pin {
+  background: transparent;
+  border: none;
+}
+
+.hamba-pin span {
+  display: block;
+  width: 14px;
+  height: 14px;
+  margin: 2px auto 0;
+  border-radius: 999px;
+  background: var(--accent);
+  border: 2px solid var(--card);
+  box-shadow: 0 1px 4px rgb(28 25 23 / 0.35);
+}
+
+.hamba-pin-selected span {
+  width: 18px;
+  height: 18px;
+  background: var(--foreground);
+}
