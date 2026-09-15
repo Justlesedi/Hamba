@@ -24,13 +24,13 @@ export function TripForm() {
       />
       <div className="grid gap-4 sm:grid-cols-2">
         <Input
-          label="Start date"
+          label="Departure date"
           name="startDate"
           type="date"
           error={state?.errors?.startDate?.[0]}
         />
         <Input
-          label="End date"
+          label="Return date"
           name="endDate"
           type="date"
           error={state?.errors?.endDate?.[0]}
@@ -39,19 +39,14 @@ export function TripForm() {
       <Input
         label="Travellers"
         name="travellers"
-        type="number"
+        inputMode="numeric"
+        pattern="[0-9]*"
         min={1}
         defaultValue={1}
+        onInput={(event) => {
+          event.currentTarget.value = event.currentTarget.value.replace(/\D/g, "");
+        }}
         error={state?.errors?.travellers?.[0]}
-      />
-      <Input
-        label="Budget in ZAR (optional)"
-        name="budgetZar"
-        type="number"
-        min={0}
-        step="1"
-        placeholder="15000"
-        error={state?.errors?.budgetZar?.[0]}
       />
       {state?.message ? (
         <p className="text-sm text-accent">{state.message}</p>

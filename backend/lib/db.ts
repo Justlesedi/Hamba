@@ -49,7 +49,9 @@ db.exec(`
     longitude REAL NOT NULL,
     company TEXT NOT NULL,
     operatingHours TEXT NOT NULL,
-    area TEXT NOT NULL
+    area TEXT NOT NULL,
+    estimatedCostCents INTEGER NOT NULL DEFAULT 0,
+    kind TEXT NOT NULL DEFAULT 'activity'
   );
 
   CREATE TABLE IF NOT EXISTS geocode_cache (
@@ -58,5 +60,21 @@ db.exec(`
     lng REAL NOT NULL
   );
 `);
+
+{
+  const columns = db.prepare(`PRAGMA table_info(activities)`).all() as {
+    name: string;
+  }[];
+  if (!columns.some((column) => column.name === "estimatedCostCents")) {
+    db.exec(
+      `ALTER TABLE activities ADD COLUMN estimatedCostCents INTEGER NOT NULL DEFAULT 0`,
+    );
+  }
+  if (!columns.some((column) => column.name === "kind")) {
+    db.exec(
+      `ALTER TABLE activities ADD COLUMN kind TEXT NOT NULL DEFAULT 'activity'`,
+    );
+  }
+}
 
 seedActivities(db);

@@ -19,7 +19,6 @@ export async function createTripAction(
     startDate: formData.get("startDate"),
     endDate: formData.get("endDate"),
     travellers: formData.get("travellers"),
-    budgetZar: formData.get("budgetZar"),
   });
 
   if (!parsed.success) {

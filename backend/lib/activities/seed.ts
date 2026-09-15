@@ -1,8 +1,21 @@
 import type { DatabaseSync } from "node:sqlite";
+import { activityCostCents } from "./costs";
 import type { Activity } from "../../types/activity";
 import { CITY_ACTIVITIES } from "./seed-cities";
+import { FOOD_SPOTS } from "./seed-food";
 
-const ACTIVITIES: Activity[] = [
+type SeedPlace = Omit<Activity, "kind" | "estimatedCostCents"> &
+  Partial<Pick<Activity, "kind" | "estimatedCostCents">>;
+
+function listedPlace(place: SeedPlace): Activity {
+  return {
+    ...place,
+    kind: place.kind ?? "activity",
+    estimatedCostCents: place.estimatedCostCents ?? 0,
+  };
+}
+
+const ACTIVITIES: SeedPlace[] = [
   {
     id: "act_table_mountain",
     name: "Table Mountain Aerial Cableway",
@@ -218,26 +231,54 @@ const ACTIVITIES: Activity[] = [
     company: "eThekwini Municipality",
     operatingHours: "07:30–17:15 daily",
     area: "Berea, Durban",
+    kind: "activity",
   },
   ...CITY_ACTIVITIES,
+  ...FOOD_SPOTS,
 ];
 
 export function seedActivities(database: DatabaseSync) {
   const insert = database.prepare(
     `INSERT OR IGNORE INTO activities (
-      id, name, latitude, longitude, company, operatingHours, area
-    ) VALUES (?, ?, ?, ?, ?, ?, ?)`,
+      id, name, latitude, longitude, company, operatingHours, area, kind, estimatedCostCents
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+  );
+  const update = database.prepare(
+    `UPDATE activities SET
+      name = ?,
+      latitude = ?,
+      longitude = ?,
+      company = ?,
+      operatingHours = ?,
+      area = ?,
+      kind = ?,
+      estimatedCostCents = ?
+    WHERE id = ?`,
   );
 
-  for (const activity of ACTIVITIES) {
+  for (const listed of ACTIVITIES.map(listedPlace)) {
+    const cost = listed.estimatedCostCents || activityCostCents(listed.id);
     insert.run(
-      activity.id,
-      activity.name,
-      activity.latitude,
-      activity.longitude,
-      activity.company,
-      activity.operatingHours,
-      activity.area,
+      listed.id,
+      listed.name,
+      listed.latitude,
+      listed.longitude,
+      listed.company,
+      listed.operatingHours,
+      listed.area,
+      listed.kind,
+      cost,
+    );
+    update.run(
+      listed.name,
+      listed.latitude,
+      listed.longitude,
+      listed.company,
+      listed.operatingHours,
+      listed.area,
+      listed.kind,
+      cost,
+      listed.id,
     );
   }
 }

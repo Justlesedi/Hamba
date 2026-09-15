@@ -13,7 +13,7 @@ export default async function Page() {
         <div>
           <h1 className="text-2xl font-semibold">Trips</h1>
           <p className="text-sm text-muted">
-            Your planned trips, with dates and budget.
+            Your planned trips, with dates and travellers.
           </p>
         </div>
         <Link

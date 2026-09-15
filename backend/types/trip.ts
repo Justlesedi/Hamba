@@ -18,5 +18,4 @@ export type CreateTripInput = {
   startDate: string;
   endDate: string;
   travellers: number;
-  budgetZar?: number | null;
 };

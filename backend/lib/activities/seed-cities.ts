@@ -9,7 +9,17 @@ function activity(
   operatingHours: string,
   area: string,
 ): Activity {
-  return { id, name, latitude, longitude, company, operatingHours, area };
+  return {
+    id,
+    name,
+    latitude,
+    longitude,
+    company,
+    operatingHours,
+    area,
+    kind: "activity",
+    estimatedCostCents: 0,
+  };
 }
 
 export const CITY_ACTIVITIES: Activity[] = [

@@ -13,9 +13,14 @@ type ActivityRow = {
   company: string;
   operatingHours: string;
   area: string;
+  kind: string | null;
+  estimatedCostCents: number | null;
 };
 
 function mapActivity(row: ActivityRow): Activity {
+  const kind =
+    row.kind === "food" || row.id.startsWith("food_") ? "food" : "activity";
+
   return {
     id: row.id,
     name: row.name,
@@ -24,6 +29,8 @@ function mapActivity(row: ActivityRow): Activity {
     company: row.company,
     operatingHours: row.operatingHours,
     area: row.area,
+    kind,
+    estimatedCostCents: Number(row.estimatedCostCents ?? 0),
   };
 }
 
@@ -33,7 +40,12 @@ export function searchNearbyActivities(
   radiusKm = MAX_ACTIVITY_DISTANCE_KM,
 ): NearbyActivity[] {
   const cap = Math.min(radiusKm, MAX_ACTIVITY_DISTANCE_KM);
-  const rows = db.prepare(`SELECT * FROM activities`).all() as ActivityRow[];
+  const rows = db
+    .prepare(
+      `SELECT id, name, latitude, longitude, company, operatingHours, area, kind, estimatedCostCents
+       FROM activities`,
+    )
+    .all() as ActivityRow[];
 
   return rows
     .map((row) => {
@@ -52,7 +64,10 @@ export function searchNearbyActivities(
 
 export function getActivityById(id: string) {
   const row = db
-    .prepare(`SELECT * FROM activities WHERE id = ?`)
+    .prepare(
+      `SELECT id, name, latitude, longitude, company, operatingHours, area, kind, estimatedCostCents
+       FROM activities WHERE id = ?`,
+    )
     .get(id) as ActivityRow | undefined;
 
   return row ? mapActivity(row) : null;

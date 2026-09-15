@@ -1,5 +1,4 @@
 import Link from "next/link";
-import { formatZarFromCents } from "@backend/lib/money";
 import type { Trip } from "@backend/types/trip";
 
 function formatDates(start: Date, end: Date) {
@@ -22,9 +21,6 @@ export function TripCard({ trip }: { trip: Trip }) {
       <p className="mt-3 text-sm">
         {formatDates(trip.startDate, trip.endDate)} · {trip.travellers}{" "}
         {trip.travellers === 1 ? "traveller" : "travellers"}
-      </p>
-      <p className="mt-1 text-sm text-muted">
-        {formatZarFromCents(trip.budgetCents)}
       </p>
     </Link>
   );

@@ -17,9 +17,17 @@ type ItineraryMapProps = {
   onCenterChange: (center: MapCenter) => void;
 };
 
-function pinIcon(selected: boolean) {
+function pinIcon(selected: boolean, kind: NearbyActivity["kind"]) {
+  const classes = ["hamba-pin"];
+  if (kind === "food") {
+    classes.push("hamba-pin-food");
+  }
+  if (selected) {
+    classes.push("hamba-pin-selected");
+  }
+
   return L.divIcon({
-    className: selected ? "hamba-pin hamba-pin-selected" : "hamba-pin",
+    className: classes.join(" "),
     html: "<span></span>",
     iconSize: selected ? [22, 28] : [18, 24],
     iconAnchor: selected ? [11, 28] : [9, 24],
@@ -121,7 +129,7 @@ export default function ItineraryMap({
 
     for (const activity of activities) {
       const marker = L.marker([activity.latitude, activity.longitude], {
-        icon: pinIcon(activity.id === selectedId),
+        icon: pinIcon(activity.id === selectedId, activity.kind),
         title: activity.name,
         riseOnHover: true,
       });

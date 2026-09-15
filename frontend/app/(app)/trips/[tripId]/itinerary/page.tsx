@@ -42,7 +42,7 @@ export default async function Page({
       <div>
         <h1 className="text-2xl font-semibold">Plan</h1>
         <p className="text-sm text-muted">
-          Nearby things to do around {trip.destination}.
+          Nearby things to do and eat around {trip.destination}.
         </p>
       </div>
       <ItineraryExplorer

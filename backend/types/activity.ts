@@ -1,3 +1,5 @@
+export type PlaceKind = "activity" | "food";
+
 export type Activity = {
   id: string;
   name: string;
@@ -6,6 +8,8 @@ export type Activity = {
   company: string;
   operatingHours: string;
   area: string;
+  kind: PlaceKind;
+  estimatedCostCents: number;
 };
 
 export type NearbyActivity = Activity & {

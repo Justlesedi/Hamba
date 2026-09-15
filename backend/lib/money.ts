@@ -4,6 +4,10 @@ const zar = new Intl.NumberFormat("en-ZA", {
   maximumFractionDigits: 0,
 });
 
+export function formatZar(cents: number) {
+  return zar.format(cents / 100);
+}
+
 export function zarToCents(amount: number) {
   return Math.round(amount * 100);
 }

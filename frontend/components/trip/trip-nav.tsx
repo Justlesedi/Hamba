@@ -11,6 +11,11 @@ export function TripNav({ tripId }: { tripId: string }) {
   const links = [
     { href: overview, label: "Overview", current: pathname === overview },
     { href: plan, label: "Plan", current: pathname === plan },
+    {
+      href: `/trips/${tripId}/budget`,
+      label: "Budget",
+      current: pathname === `/trips/${tripId}/budget`,
+    },
   ];
 
   return (

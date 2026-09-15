@@ -35,23 +35,24 @@ export const createTripSchema = z
   .object({
     title: z.string().trim().min(2, "Give this trip a name."),
     destination: z.string().trim().min(2, "Enter a destination."),
-    startDate: z.string().min(1, "Start date is required."),
-    endDate: z.string().min(1, "End date is required."),
-    travellers: z.coerce.number().int().min(1, "At least one traveller."),
-    budgetZar: z.preprocess(
-      (value) => {
-        if (value === "" || value == null) {
-          return undefined;
-        }
-        return value;
-      },
-      z.coerce.number().min(0, "Budget cannot be negative.").optional(),
+    startDate: z.string().min(1, "Departure date is required."),
+    endDate: z.string().min(1, "Return date is required."),
+    travellers: z.preprocess(
+      (value) => (value == null ? value : String(value).replace(/\D/g, "")),
+      z.string().regex(/^[1-9]\d*$/, "Travellers must be a whole number.").transform(Number),
     ),
   })
   .refine((data) => data.endDate >= data.startDate, {
-    message: "End date must be on or after the start date.",
+    message: "Return date must be on or after the departure date.",
     path: ["endDate"],
   });
+
+export const budgetForecastSchema = z.object({
+  budgetZar: z.preprocess(
+    (value) => (value == null ? value : String(value).replace(/\D/g, "")),
+    z.string().regex(/^[1-9]\d*$/, "Enter a whole number in rands.").transform(Number),
+  ),
+});
 
 export type SignUpFormState =
   | {
@@ -82,8 +83,17 @@ export type CreateTripFormState =
         startDate?: string[];
         endDate?: string[];
         travellers?: string[];
+      };
+      message?: string;
+    }
+  | undefined;
+
+export type BudgetForecastFormState =
+  | {
+      errors?: {
         budgetZar?: string[];
       };
       message?: string;
+      forecast?: import("../types/budget").BudgetForecast;
     }
   | undefined;

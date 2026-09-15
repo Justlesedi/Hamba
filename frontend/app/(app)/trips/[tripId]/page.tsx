@@ -51,12 +51,19 @@ export default async function Page({
         <div>
           <p className="text-sm text-muted">Budget</p>
           <p className="mt-1 font-medium">
-            {formatZarFromCents(trip.budgetCents)}
+            {trip.budgetCents == null ? (
+              <Link href={`/trips/${trip.id}/budget`} className="hover:text-accent">
+                Forecast on Budget
+              </Link>
+            ) : (
+              formatZarFromCents(trip.budgetCents)
+            )}
           </p>
         </div>
       </Card>
       <p className="text-sm text-muted">
-        Open Plan to see activities within 30 km on a map.
+        Open Plan for nearby activities, or Budget to forecast stay, transport,
+        and what you can afford.
       </p>
     </section>
   );

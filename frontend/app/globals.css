@@ -8,6 +8,7 @@
   --border: #e4d9c8;
   --accent: #c45c26;
   --accent-hover: #a94b1d;
+  --food: #2f6f5e;
 }
 
 @theme inline {
@@ -42,6 +43,10 @@ body {
   background: var(--accent);
   border: 2px solid var(--card);
   box-shadow: 0 1px 4px rgb(28 25 23 / 0.35);
+}
+
+.hamba-pin-food span {
+  background: var(--food);
 }
 
 .hamba-pin-selected span {

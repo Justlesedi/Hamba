@@ -7,7 +7,7 @@ export default function Page() {
       <div>
         <h1 className="text-2xl font-semibold">New trip</h1>
         <p className="text-sm text-muted">
-          Destination, dates, travellers, and an optional ZAR budget.
+          Trip name, destination, dates, and travellers.
         </p>
       </div>
       <Card>

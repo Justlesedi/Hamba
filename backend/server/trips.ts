@@ -54,13 +54,12 @@ export function getTripForUser(userId: string, tripId: string) {
 export function createTrip(userId: string, input: CreateTripInput) {
   const now = new Date().toISOString();
   const id = randomUUID();
-  const budgetCents = input.budgetZar == null ? null : zarToCents(input.budgetZar);
 
   db.prepare(
     `INSERT INTO trips (
       id, userId, title, destination, startDate, endDate,
       currency, budgetCents, travellers, createdAt, updatedAt
-    ) VALUES (?, ?, ?, ?, ?, ?, 'ZAR', ?, ?, ?, ?)`,
+    ) VALUES (?, ?, ?, ?, ?, ?, 'ZAR', NULL, ?, ?, ?)`,
   ).run(
     id,
     userId,
@@ -68,11 +67,23 @@ export function createTrip(userId: string, input: CreateTripInput) {
     input.destination.trim(),
     `${input.startDate}T00:00:00.000Z`,
     `${input.endDate}T00:00:00.000Z`,
-    budgetCents,
     input.travellers,
     now,
     now,
   );
 
   return getTripForUser(userId, id)!;
+}
+
+export function updateTripBudget(userId: string, tripId: string, budgetZar: number) {
+  const trip = getTripForUser(userId, tripId);
+  if (!trip) {
+    return null;
+  }
+
+  db.prepare(
+    `UPDATE trips SET budgetCents = ?, updatedAt = ? WHERE id = ? AND userId = ?`,
+  ).run(zarToCents(budgetZar), new Date().toISOString(), tripId, userId);
+
+  return getTripForUser(userId, tripId);
 }
