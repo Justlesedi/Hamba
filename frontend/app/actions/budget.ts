@@ -2,7 +2,6 @@
 
 import { forecastTripBudget } from "@backend/server/budget";
 import { getTripForUser, updateTripBudget } from "@backend/server/trips";
-import { resolveDestinationCenter } from "@backend/lib/geocode";
 import {
   budgetForecastSchema,
   type BudgetForecastFormState,
@@ -32,14 +31,11 @@ export async function forecastBudgetAction(
     return { message: "Trip not found." };
   }
 
-  const center = await resolveDestinationCenter(trip.destination);
-  if (!center) {
-    return { message: "Could not place this destination on the map." };
-  }
-
   try {
-    await updateTripBudget(userId, tripId, parsed.data.budgetZar);
-    const forecast = forecastTripBudget(userId, tripId, parsed.data, center);
+    if (parsed.data.budgetZar != null) {
+      await updateTripBudget(userId, tripId, parsed.data.budgetZar);
+    }
+    const forecast = forecastTripBudget(userId, tripId, parsed.data);
     if (!forecast) {
       return { message: "Trip not found." };
     }

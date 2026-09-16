@@ -3,6 +3,7 @@ import { SOUTH_AFRICA_PLACES } from "./places/south-africa";
 export type MapCenter = { lat: number; lng: number };
 
 export const MAX_ACTIVITY_DISTANCE_KM = 30;
+export const MAX_STAY_DISTANCE_KM = MAX_ACTIVITY_DISTANCE_KM;
 
 export function normalizePlace(value: string) {
   return value

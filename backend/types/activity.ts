@@ -1,4 +1,5 @@
 export type PlaceKind = "activity" | "food";
+export type PriceUnit = "visit" | "hour";
 
 export type Activity = {
   id: string;
@@ -14,4 +15,7 @@ export type Activity = {
 
 export type NearbyActivity = Activity & {
   distanceKm: number;
+  priceUnit: PriceUnit;
+  typicalHours: number;
+  openStatus: import("../lib/hours").OpenStatus;
 };

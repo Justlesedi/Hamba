@@ -5,22 +5,41 @@ import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import { MAX_ACTIVITY_DISTANCE_KM } from "@backend/lib/geo";
 import type { NearbyActivity } from "@backend/types/activity";
+import type { QuotedStay } from "@backend/types/stay";
 
 type MapCenter = { lat: number; lng: number };
+export type PlanSelectionKind = "stay" | "activity";
 
 type ItineraryMapProps = {
   center: MapCenter;
+  stays: QuotedStay[];
   activities: NearbyActivity[];
   selectedId: string | null;
+  selectedKind: PlanSelectionKind | null;
+  pickedActivityIds?: string[];
   locateRequest: number;
-  onSelect: (activityId: string) => void;
+  onSelectStay: (stayId: string) => void;
+  onSelectActivity: (activityId: string) => void;
   onCenterChange: (center: MapCenter) => void;
 };
 
-function pinIcon(selected: boolean, kind: NearbyActivity["kind"]) {
+function pinIcon(
+  selected: boolean,
+  picked: boolean,
+  closed: boolean,
+  kind: "stay" | NearbyActivity["kind"],
+) {
   const classes = ["hamba-pin"];
-  if (kind === "food") {
+  if (kind === "stay") {
+    classes.push("hamba-pin-stay");
+  } else if (kind === "food") {
     classes.push("hamba-pin-food");
+  }
+  if (closed) {
+    classes.push("hamba-pin-closed");
+  }
+  if (picked) {
+    classes.push("hamba-pin-picked");
   }
   if (selected) {
     classes.push("hamba-pin-selected");
@@ -29,30 +48,38 @@ function pinIcon(selected: boolean, kind: NearbyActivity["kind"]) {
   return L.divIcon({
     className: classes.join(" "),
     html: "<span></span>",
-    iconSize: selected ? [22, 28] : [18, 24],
-    iconAnchor: selected ? [11, 28] : [9, 24],
+    iconSize: selected || picked ? [22, 28] : [18, 24],
+    iconAnchor: selected || picked ? [11, 28] : [9, 24],
   });
 }
 
 export default function ItineraryMap({
   center,
+  stays,
   activities,
   selectedId,
+  selectedKind,
+  pickedActivityIds = [],
   locateRequest,
-  onSelect,
+  onSelectStay,
+  onSelectActivity,
   onCenterChange,
 }: ItineraryMapProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<L.Map | null>(null);
   const markersRef = useRef<L.LayerGroup | null>(null);
   const circleRef = useRef<L.Circle | null>(null);
-  const onSelectRef = useRef(onSelect);
+  const onSelectStayRef = useRef(onSelectStay);
+  const onSelectActivityRef = useRef(onSelectActivity);
   const onCenterChangeRef = useRef(onCenterChange);
   const skipMovesRef = useRef(0);
+  const staysRef = useRef(stays);
   const activitiesRef = useRef(activities);
 
-  onSelectRef.current = onSelect;
+  onSelectStayRef.current = onSelectStay;
+  onSelectActivityRef.current = onSelectActivity;
   onCenterChangeRef.current = onCenterChange;
+  staysRef.current = stays;
   activitiesRef.current = activities;
 
   useEffect(() => {
@@ -127,33 +154,76 @@ export default function ItineraryMap({
 
     group.clearLayers();
 
-    for (const activity of activities) {
-      const marker = L.marker([activity.latitude, activity.longitude], {
-        icon: pinIcon(activity.id === selectedId, activity.kind),
-        title: activity.name,
+    for (const stay of stays) {
+      const marker = L.marker([stay.latitude, stay.longitude], {
+        icon: pinIcon(
+          selectedKind === "stay" && stay.id === selectedId,
+          false,
+          stay.openStatus.state === "closed",
+          "stay",
+        ),
+        title: stay.name,
         riseOnHover: true,
       });
 
       marker.on("click", () => {
-        onSelectRef.current(activity.id);
+        if (stay.openStatus.state === "closed") {
+          return;
+        }
+        onSelectStayRef.current(stay.id);
       });
 
       marker.addTo(group);
     }
-  }, [activities, selectedId]);
+
+    for (const activity of activities) {
+      const marker = L.marker([activity.latitude, activity.longitude], {
+        icon: pinIcon(
+          selectedKind === "activity" && activity.id === selectedId,
+          pickedActivityIds.includes(activity.id),
+          activity.openStatus.state === "closed",
+          activity.kind,
+        ),
+        title:
+          activity.openStatus.state === "closed"
+            ? `${activity.name} (closed)`
+            : activity.name,
+        riseOnHover: true,
+      });
+
+      marker.on("click", () => {
+        if (activity.openStatus.state === "closed") {
+          return;
+        }
+        onSelectActivityRef.current(activity.id);
+      });
+
+      marker.addTo(group);
+    }
+  }, [activities, pickedActivityIds, selectedId, selectedKind, stays]);
 
   useEffect(() => {
     const map = mapRef.current;
-    const selected = activitiesRef.current.find(
-      (activity) => activity.id === selectedId,
-    );
-    if (!map || !selected) {
+    if (!map || !selectedId || !selectedKind) {
+      return;
+    }
+
+    const stay =
+      selectedKind === "stay"
+        ? staysRef.current.find((listing) => listing.id === selectedId)
+        : null;
+    const activity =
+      selectedKind === "activity"
+        ? activitiesRef.current.find((place) => place.id === selectedId)
+        : null;
+    const point = stay ?? activity;
+    if (!point) {
       return;
     }
 
     skipMovesRef.current += 1;
-    map.panTo([selected.latitude, selected.longitude]);
-  }, [selectedId]);
+    map.panTo([point.latitude, point.longitude]);
+  }, [selectedId, selectedKind]);
 
   return (
     <div

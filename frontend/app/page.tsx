@@ -11,8 +11,8 @@ export default async function Page() {
         Plan your trip in one place.
       </h1>
       <p className="text-lg text-muted">
-        Start with a trip, dates, travellers, and a ZAR budget. Flights,
-        stays, and activities come next.
+        Start with a trip, then choose a stay and the places you want to visit.
+        Budget follows your plan. Booking comes next.
       </p>
       <div className="flex flex-wrap gap-3">
         {user ? (

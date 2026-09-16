@@ -1,9 +1,7 @@
 import { NextResponse } from "next/server";
-import { searchNearbyActivities } from "@backend/server/activities";
 import { searchNearbyStays } from "@backend/server/stays";
-import { listTripPlaceIds } from "@backend/server/plan";
 import { nearbyActivitiesSchema } from "@backend/lib/validation";
-import { MAX_ACTIVITY_DISTANCE_KM } from "@backend/lib/geo";
+import { MAX_STAY_DISTANCE_KM } from "@backend/lib/geo";
 import { tripNights } from "@backend/lib/budget/estimates";
 import { resolveDestinationCenter } from "@backend/lib/geocode";
 import { getTripForUser } from "@backend/server/trips";
@@ -49,17 +47,15 @@ export async function GET(
     );
   }
 
-  const nights = tripNights(trip.startDate, trip.endDate);
+  const stays = searchNearbyStays(center.lat, center.lng, {
+    travellers: trip.travellers,
+    nights: tripNights(trip.startDate, trip.endDate),
+  });
 
   return NextResponse.json({
     center,
-    maxDistanceKm: MAX_ACTIVITY_DISTANCE_KM,
+    maxDistanceKm: MAX_STAY_DISTANCE_KM,
     selectedStayId: trip.stayId,
-    selectedActivityIds: listTripPlaceIds(tripId),
-    stays: searchNearbyStays(center.lat, center.lng, {
-      travellers: trip.travellers,
-      nights,
-    }),
-    activities: searchNearbyActivities(center.lat, center.lng),
+    stays,
   });
 }

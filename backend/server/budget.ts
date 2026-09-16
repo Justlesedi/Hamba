@@ -1,119 +1,130 @@
-import { activityCostCents } from "../lib/activities/costs";
 import {
-  estimateTransportCents,
-  nightlyStayCents,
-  stayRooms,
-  tripNights,
-} from "../lib/budget/estimates";
+  activityCostCents,
+  activityPricing,
+  placePartyCostCents,
+} from "../lib/activities/costs";
+import { estimateLegCents, tripNights } from "../lib/budget/estimates";
+import { haversineKm } from "../lib/geo";
 import { zarToCents } from "../lib/money";
-import { searchNearbyActivities } from "./activities";
+import { getNearbyActivityById } from "./activities";
+import { listTripPlaceIds } from "./plan";
+import { getStayById, quoteStay } from "./stays";
 import { getTripForUser } from "./trips";
-import type { BudgetForecast, ForecastActivity } from "../types/budget";
-
-function recommendFitting(
-  items: ForecastActivity[],
-  remainingCents: number,
-  limit?: number,
-) {
-  const recommendedIds = new Set<string>();
-  let remaining = remainingCents;
-
-  for (const item of items) {
-    if (limit != null && recommendedIds.size >= limit) {
-      break;
-    }
-    if (item.partyCostCents <= remaining) {
-      recommendedIds.add(item.id);
-      remaining -= item.partyCostCents;
-    }
-  }
-
-  return { recommendedIds, remaining };
-}
+import type { BudgetForecast, ForecastActivity, TransportLeg } from "../types/budget";
 
 export function forecastTripBudget(
   userId: string,
   tripId: string,
-  input: { budgetZar: number },
-  center: { lat: number; lng: number },
+  input: { budgetZar?: number } = {},
 ): BudgetForecast | null {
   const trip = getTripForUser(userId, tripId);
   if (!trip) {
     return null;
   }
 
-  const budgetCents = zarToCents(input.budgetZar);
+  const budgetCents =
+    input.budgetZar != null
+      ? zarToCents(input.budgetZar)
+      : trip.budgetCents;
   const nights = tripNights(trip.startDate, trip.endDate);
-  const rooms = stayRooms(trip.travellers);
-  const stayNights = nights;
-  const nightlyCents = nightlyStayCents(trip.destination);
-  const stayTotal = nightlyCents * rooms * stayNights;
-  const transport = estimateTransportCents({
-    nights,
-    travellers: trip.travellers,
-  });
+  const chosenStay = trip.stayId ? getStayById(trip.stayId) : null;
+  const stay = chosenStay
+    ? quoteStay(chosenStay, {
+        travellers: trip.travellers,
+        nights,
+      })
+    : null;
 
-  const nearby = searchNearbyActivities(center.lat, center.lng);
-  const priced = nearby
-    .map((place) => {
-      const estimatedCostCents =
-        place.estimatedCostCents > 0
-          ? place.estimatedCostCents
-          : activityCostCents(place.id);
-      return {
-        id: place.id,
-        name: place.name,
-        area: place.area,
-        kind: place.kind === "food" || place.id.startsWith("food_") ? "food" : "activity",
-        estimatedCostCents,
-        partyCostCents: estimatedCostCents * trip.travellers,
-        recommended: false,
-      };
-    })
-    .sort((a, b) => a.partyCostCents - b.partyCostCents);
+  const selectedIds = listTripPlaceIds(tripId);
+  const origin = stay
+    ? { lat: stay.latitude, lng: stay.longitude }
+    : null;
 
-  const food = priced.filter((place) => place.kind === "food");
-  const activities = priced.filter((place) => place.kind !== "food");
-  const maxFood = 8;
+  const activities: ForecastActivity[] = [];
+  const legs: TransportLeg[] = [];
 
-  const foodPick = recommendFitting(food, budgetCents - stayTotal, maxFood);
-  const activityPick = recommendFitting(activities, foodPick.remaining);
-  const recommendedIds = new Set([
-    ...foodPick.recommendedIds,
-    ...activityPick.recommendedIds,
-  ]);
+  for (const activityId of selectedIds) {
+    const place = getNearbyActivityById(
+      activityId,
+      origin ?? undefined,
+    );
+    if (!place) {
+      continue;
+    }
 
-  const listed = priced.map((place) => ({
-    ...place,
-    recommended: recommendedIds.has(place.id),
-  }));
+    const unitCents =
+      place.estimatedCostCents > 0
+        ? place.estimatedCostCents
+        : activityCostCents(place.id);
+    const pricing = activityPricing(place.id, place.kind);
 
-  const recommendedTotalCents = listed
-    .filter((place) => place.recommended)
-    .reduce((sum, place) => sum + place.partyCostCents, 0);
+    activities.push({
+      id: place.id,
+      name: place.name,
+      area: place.area,
+      kind: place.kind,
+      company: place.company,
+      operatingHours: place.operatingHours,
+      openStatus: place.openStatus,
+      priceUnit: pricing.priceUnit,
+      typicalHours: pricing.typicalHours,
+      estimatedCostCents: unitCents,
+      partyCostCents: placePartyCostCents(unitCents, trip.travellers, pricing),
+    });
 
-  const plannedTotalCents = stayTotal + recommendedTotalCents;
+    if (origin) {
+      const distanceKm = haversineKm(
+        origin.lat,
+        origin.lng,
+        place.latitude,
+        place.longitude,
+      );
+      const roundTripKm = Math.round(distanceKm * 2 * 10) / 10;
+      const leg = estimateLegCents(roundTripKm, trip.travellers);
+      legs.push({
+        toId: place.id,
+        toName: place.name,
+        ...leg,
+      });
+    }
+  }
+
+  const stayTotal = stay?.totalCents ?? 0;
+  const placesTotal = activities.reduce(
+    (sum, place) => sum + place.partyCostCents,
+    0,
+  );
+  const plannedTotalCents = stayTotal + placesTotal;
+  const transport = legs.reduce(
+    (sum, leg) => ({
+      uberCents: sum.uberCents + leg.uberCents,
+      busCents: sum.busCents + leg.busCents,
+      fuelCents: sum.fuelCents + leg.fuelCents,
+    }),
+    { uberCents: 0, busCents: 0, fuelCents: 0 },
+  );
 
   return {
     budgetCents,
-    nights: stayNights,
-    travelDays: transport.travelDays,
+    nights,
     travellers: trip.travellers,
-    stay: {
-      nightlyCents,
-      rooms,
-      nights: stayNights,
-      totalCents: stayTotal,
-      note: "Rough mid-range stay estimate. Exact stays will come in the next step.",
-    },
-    transport: {
-      uberCents: transport.uberCents,
-      busCents: transport.busCents,
-      fuelCents: transport.fuelCents,
-    },
-    activities: listed,
-    recommendedTotalCents,
+    stay: stay
+      ? {
+          listingId: stay.id,
+          name: stay.name,
+          area: stay.area,
+          kind: stay.kind,
+          nightlyCents: stay.nightlyCents,
+          rooms: stay.units,
+          nights,
+          totalCents: stay.totalCents,
+        }
+      : null,
+    activities,
+    legs,
+    transport,
     plannedTotalCents,
-    remainingCents: budgetCents - plannedTotalCents,
+    remainingCents:
+      budgetCents == null ? null : budgetCents - plannedTotalCents,
   };
 }

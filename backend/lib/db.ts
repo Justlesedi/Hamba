@@ -2,6 +2,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { DatabaseSync } from "node:sqlite";
 import { seedActivities } from "./activities/seed";
+import { seedStays } from "./stays/seed";
 
 function repoRoot() {
   if (process.cwd().endsWith("frontend") || process.cwd().endsWith("backend")) {
@@ -35,6 +36,7 @@ db.exec(`
     currency TEXT NOT NULL DEFAULT 'ZAR',
     budgetCents INTEGER,
     travellers INTEGER NOT NULL DEFAULT 1,
+    stayId TEXT,
     createdAt TEXT NOT NULL,
     updatedAt TEXT NOT NULL,
     FOREIGN KEY (userId) REFERENCES users(id) ON DELETE CASCADE
@@ -52,6 +54,28 @@ db.exec(`
     area TEXT NOT NULL,
     estimatedCostCents INTEGER NOT NULL DEFAULT 0,
     kind TEXT NOT NULL DEFAULT 'activity'
+  );
+
+  CREATE TABLE IF NOT EXISTS stays (
+    id TEXT PRIMARY KEY,
+    name TEXT NOT NULL,
+    latitude REAL NOT NULL,
+    longitude REAL NOT NULL,
+    company TEXT NOT NULL,
+    area TEXT NOT NULL,
+    kind TEXT NOT NULL,
+    sleeps INTEGER NOT NULL,
+    nightlyCents INTEGER NOT NULL,
+    note TEXT NOT NULL,
+    operatingHours TEXT NOT NULL DEFAULT 'Open 24 hours'
+  );
+
+  CREATE TABLE IF NOT EXISTS trip_places (
+    tripId TEXT NOT NULL,
+    activityId TEXT NOT NULL,
+    createdAt TEXT NOT NULL,
+    PRIMARY KEY (tripId, activityId),
+    FOREIGN KEY (tripId) REFERENCES trips(id) ON DELETE CASCADE
   );
 
   CREATE TABLE IF NOT EXISTS geocode_cache (
@@ -77,4 +101,25 @@ db.exec(`
   }
 }
 
+{
+  const columns = db.prepare(`PRAGMA table_info(trips)`).all() as {
+    name: string;
+  }[];
+  if (!columns.some((column) => column.name === "stayId")) {
+    db.exec(`ALTER TABLE trips ADD COLUMN stayId TEXT`);
+  }
+}
+
+{
+  const columns = db.prepare(`PRAGMA table_info(stays)`).all() as {
+    name: string;
+  }[];
+  if (!columns.some((column) => column.name === "operatingHours")) {
+    db.exec(
+      `ALTER TABLE stays ADD COLUMN operatingHours TEXT NOT NULL DEFAULT 'Open 24 hours'`,
+    );
+  }
+}
+
 seedActivities(db);
+seedStays(db);

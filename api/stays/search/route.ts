@@ -1,15 +1,37 @@
-export async function GET() {
-  return new Response(null, { status: 204 });
-}
+import { NextResponse } from "next/server";
+import { searchNearbyStays } from "@backend/server/stays";
+import { nearbyActivitiesSchema } from "@backend/lib/validation";
+import { MAX_STAY_DISTANCE_KM } from "@backend/lib/geo";
+import { readSession } from "@/lib/session";
 
-export async function POST() {
-  return new Response(null, { status: 204 });
-}
+export async function GET(request: Request) {
+  const session = await readSession();
+  if (!session?.userId) {
+    return NextResponse.json({ message: "Sign in required." }, { status: 401 });
+  }
 
-export async function PATCH() {
-  return new Response(null, { status: 204 });
-}
+  const url = new URL(request.url);
+  const parsed = nearbyActivitiesSchema.safeParse({
+    lat: url.searchParams.get("lat"),
+    lng: url.searchParams.get("lng"),
+  });
 
-export async function DELETE() {
-  return new Response(null, { status: 204 });
+  if (!parsed.success) {
+    return NextResponse.json(
+      { errors: parsed.error.flatten().fieldErrors },
+      { status: 400 },
+    );
+  }
+
+  const travellers = Number(url.searchParams.get("travellers") ?? 2);
+  const nights = Number(url.searchParams.get("nights") ?? 1);
+  const stays = searchNearbyStays(parsed.data.lat, parsed.data.lng, {
+    travellers: Number.isFinite(travellers) && travellers > 0 ? travellers : 2,
+    nights: Number.isFinite(nights) && nights >= 0 ? nights : 1,
+  });
+
+  return NextResponse.json({
+    maxDistanceKm: MAX_STAY_DISTANCE_KM,
+    stays,
+  });
 }

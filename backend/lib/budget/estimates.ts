@@ -79,6 +79,10 @@ export function stayRooms(travellers: number) {
   return Math.max(1, Math.ceil(travellers / 2));
 }
 
+export function stayUnits(travellers: number, sleeps: number) {
+  return Math.max(1, Math.ceil(travellers / Math.max(1, sleeps)));
+}
+
 export function tripNights(startDate: Date, endDate: Date) {
   const start = Date.UTC(
     startDate.getUTCFullYear(),
@@ -107,4 +111,20 @@ export function estimateTransportCents(options: {
   const fuelCents = Math.round(litres * zarToCents(22.5) + travelDays * zarToCents(40));
 
   return { uberCents, busCents, fuelCents, travelDays };
+}
+
+export function estimateLegCents(distanceKm: number, travellers: number) {
+  const km = Math.max(1, distanceKm);
+  const cars = Math.ceil(travellers / 3);
+  const uberCents = Math.round((zarToCents(25) + zarToCents(15) * km) * cars);
+  const busCents = zarToCents(15) * travellers;
+  const litres = (km * 8.5) / 100;
+  const fuelCents = Math.round(litres * zarToCents(22.5) + zarToCents(12));
+
+  return {
+    distanceKm: Math.round(km * 10) / 10,
+    uberCents,
+    busCents,
+    fuelCents,
+  };
 }

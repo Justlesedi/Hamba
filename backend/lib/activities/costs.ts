@@ -97,3 +97,42 @@ export const ACTIVITY_COST_CENTS: Record<string, number> = {
 export function activityCostCents(activityId: string) {
   return ACTIVITY_COST_CENTS[activityId] ?? DEFAULT_ACTIVITY_COST_CENTS;
 }
+
+const HOURLY_HOURS: Record<string, number> = {
+  act_groot_constantia: 1,
+  act_table_mountain: 1.5,
+  act_robben_island: 3.5,
+  act_moses_mabhida: 1,
+  act_cango_caves: 1.5,
+  act_sudwala: 1,
+  act_gold_reef_city: 4,
+  act_ushaka: 3,
+  act_sun_city_valley: 3,
+};
+
+export function activityPricing(activityId: string, kind: "activity" | "food") {
+  if (kind === "food") {
+    return { priceUnit: "visit" as const, typicalHours: 1.5 };
+  }
+  if (HOURLY_HOURS[activityId] != null) {
+    return {
+      priceUnit: "hour" as const,
+      typicalHours: HOURLY_HOURS[activityId],
+    };
+  }
+  if (activityCostCents(activityId) === 0) {
+    return { priceUnit: "visit" as const, typicalHours: 1 };
+  }
+  return { priceUnit: "visit" as const, typicalHours: 2 };
+}
+
+export function placePartyCostCents(
+  unitCents: number,
+  travellers: number,
+  pricing: { priceUnit: "visit" | "hour"; typicalHours: number },
+) {
+  if (pricing.priceUnit === "hour") {
+    return Math.round(unitCents * pricing.typicalHours * travellers);
+  }
+  return unitCents * travellers;
+}

@@ -48,10 +48,15 @@ export const createTripSchema = z
   });
 
 export const budgetForecastSchema = z.object({
-  budgetZar: z.preprocess(
-    (value) => (value == null ? value : String(value).replace(/\D/g, "")),
+  budgetZar: z.preprocess((value) => {
+    if (value == null || String(value).trim() === "") {
+      return undefined;
+    }
+    return String(value).replace(/\D/g, "");
+  }, z.union([
+    z.undefined(),
     z.string().regex(/^[1-9]\d*$/, "Enter a whole number in rands.").transform(Number),
-  ),
+  ])),
 });
 
 export type SignUpFormState =
@@ -88,6 +93,11 @@ export type CreateTripFormState =
     }
   | undefined;
 
+export const chooseStaySchema = z.object({
+  tripId: z.string().trim().min(1, "Trip is missing."),
+  stayId: z.string().trim(),
+});
+
 export type BudgetForecastFormState =
   | {
       errors?: {
@@ -95,5 +105,32 @@ export type BudgetForecastFormState =
       };
       message?: string;
       forecast?: import("../types/budget").BudgetForecast;
+    }
+  | undefined;
+
+export type ChooseStayFormState =
+  | {
+      message?: string;
+      selectedStayId?: string | null;
+    }
+  | undefined;
+
+export const togglePlaceSchema = z.object({
+  tripId: z.string().trim().min(1, "Trip is missing."),
+  activityId: z.string().trim().min(1, "Place is missing."),
+});
+
+export const updatePlacesSchema = z.object({
+  tripId: z.string().trim().min(1, "Trip is missing."),
+  intent: z.enum(["add", "remove"]),
+  activityIds: z
+    .array(z.string().trim().min(1, "Place is missing."))
+    .min(1, "Choose at least one place."),
+});
+
+export type TogglePlaceFormState =
+  | {
+      message?: string;
+      selectedActivityIds?: string[];
     }
   | undefined;

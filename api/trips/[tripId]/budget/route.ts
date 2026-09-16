@@ -2,7 +2,6 @@ import { NextResponse } from "next/server";
 import { forecastTripBudget } from "@backend/server/budget";
 import { getTripForUser, updateTripBudget } from "@backend/server/trips";
 import { budgetForecastSchema } from "@backend/lib/validation";
-import { resolveDestinationCenter } from "@backend/lib/geocode";
 import { readSession } from "@/lib/session";
 
 export async function GET(
@@ -20,20 +19,12 @@ export async function GET(
     return NextResponse.json({ message: "Trip not found." }, { status: 404 });
   }
 
-  if (trip.budgetCents == null) {
-    return NextResponse.json({ trip, forecast: null });
-  }
-
-  const center = await resolveDestinationCenter(trip.destination);
-  if (!center) {
-    return NextResponse.json({ trip, forecast: null });
-  }
-
   const forecast = forecastTripBudget(
     session.userId,
     tripId,
-    { budgetZar: Math.round(trip.budgetCents / 100) },
-    center,
+    trip.budgetCents != null
+      ? { budgetZar: Math.round(trip.budgetCents / 100) }
+      : {},
   );
 
   return NextResponse.json({ trip, forecast });
@@ -59,29 +50,21 @@ export async function POST(
     );
   }
 
-  const trip = await updateTripBudget(
-    session.userId,
-    tripId,
-    parsed.data.budgetZar,
-  );
-  if (!trip) {
+  if (parsed.data.budgetZar != null) {
+    const trip = await updateTripBudget(
+      session.userId,
+      tripId,
+      parsed.data.budgetZar,
+    );
+    if (!trip) {
+      return NextResponse.json({ message: "Trip not found." }, { status: 404 });
+    }
+  }
+
+  const forecast = forecastTripBudget(session.userId, tripId, parsed.data);
+  if (!forecast) {
     return NextResponse.json({ message: "Trip not found." }, { status: 404 });
   }
 
-  const center = await resolveDestinationCenter(trip.destination);
-  if (!center) {
-    return NextResponse.json(
-      { message: "Could not place this destination on the map." },
-      { status: 404 },
-    );
-  }
-
-  const forecast = forecastTripBudget(
-    session.userId,
-    tripId,
-    parsed.data,
-    center,
-  );
-
-  return NextResponse.json({ trip, forecast });
+  return NextResponse.json({ forecast });
 }

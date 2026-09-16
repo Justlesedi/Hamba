@@ -1,9 +1,15 @@
 "use client";
 
 import { useActionState } from "react";
+import Link from "next/link";
 import { forecastBudgetAction } from "@/app/actions/budget";
 import { formatZar } from "@backend/lib/money";
-import type { BudgetForecast, ForecastActivity } from "@backend/types/budget";
+import type {
+  BudgetForecast,
+  ForecastActivity,
+  TransportLeg,
+} from "@backend/types/budget";
+import { OpenBadge } from "@/components/plan/open-badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -22,15 +28,17 @@ export function BudgetSummary({
     initialForecast ? { forecast: initialForecast } : undefined,
   );
   const forecast = state?.forecast ?? initialForecast ?? null;
+  const budgetValue =
+    forecast?.budgetCents != null
+      ? String(Math.round(forecast.budgetCents / 100))
+      : initialBudgetZar
+        ? String(initialBudgetZar)
+        : "";
 
   return (
     <div className="space-y-6">
       <Card>
-        <form
-          action={action}
-          className="space-y-4"
-          key={forecast?.budgetCents ?? "new"}
-        >
+        <form action={action} className="space-y-4" key={budgetValue || "new"}>
           <input type="hidden" name="tripId" value={tripId} />
           <Input
             label="Trip budget in ZAR"
@@ -38,13 +46,7 @@ export function BudgetSummary({
             inputMode="numeric"
             pattern="[0-9]*"
             placeholder="15000"
-            defaultValue={
-              forecast
-                ? String(Math.round(forecast.budgetCents / 100))
-                : initialBudgetZar
-                  ? String(initialBudgetZar)
-                  : ""
-            }
+            defaultValue={budgetValue}
             onInput={(event) => {
               event.currentTarget.value = event.currentTarget.value.replace(
                 /\D/g,
@@ -57,24 +59,32 @@ export function BudgetSummary({
             <p className="text-sm text-accent">{state.message}</p>
           ) : null}
           <Button disabled={pending}>
-            {pending ? "Forecasting…" : "Forecast budget"}
+            {pending ? "Updating…" : "Update budget"}
           </Button>
         </form>
       </Card>
 
-      {forecast ? <ForecastResults forecast={forecast} /> : null}
+      {forecast ? (
+        <ForecastResults tripId={tripId} forecast={forecast} />
+      ) : null}
     </div>
   );
 }
 
-function ForecastResults({ forecast }: { forecast: BudgetForecast }) {
-  const recommended = forecast.activities.filter((place) => place.recommended);
-  const stretch = forecast.activities.filter((place) => !place.recommended);
-  const recommendedFood = recommended.filter((place) => place.kind === "food");
-  const recommendedActivities = recommended.filter(
+function ForecastResults({
+  tripId,
+  forecast,
+}: {
+  tripId: string;
+  forecast: BudgetForecast;
+}) {
+  const activities = forecast.activities.filter(
     (place) => place.kind !== "food",
   );
-  const overBudget = forecast.remainingCents < 0;
+  const food = forecast.activities.filter((place) => place.kind === "food");
+  const overBudget =
+    forecast.remainingCents != null && forecast.remainingCents < 0;
+  const planHref = `/trips/${tripId}/itinerary`;
 
   return (
     <div className="space-y-4">
@@ -82,117 +92,139 @@ function ForecastResults({ forecast }: { forecast: BudgetForecast }) {
         <div>
           <p className="text-sm text-muted">Your budget</p>
           <p className="mt-1 text-lg font-semibold">
-            {formatZar(forecast.budgetCents)}
+            {forecast.budgetCents == null
+              ? "Not set"
+              : formatZar(forecast.budgetCents)}
           </p>
         </div>
         <div>
-          <p className="text-sm text-muted">Planned stay and places</p>
+          <p className="text-sm text-muted">Your plan</p>
           <p className="mt-1 text-lg font-semibold">
             {formatZar(forecast.plannedTotalCents)}
           </p>
         </div>
         <div>
           <p className="text-sm text-muted">
-            {overBudget ? "Over budget" : "Left over"}
+            {forecast.remainingCents == null
+              ? "Left over"
+              : overBudget
+                ? "Over budget"
+                : "Left over"}
           </p>
           <p
             className={`mt-1 text-lg font-semibold ${overBudget ? "text-accent" : ""}`}
           >
-            {formatZar(Math.abs(forecast.remainingCents))}
+            {forecast.remainingCents == null
+              ? "—"
+              : formatZar(Math.abs(forecast.remainingCents))}
           </p>
         </div>
       </Card>
 
       <Card>
-        <h2 className="font-medium">Stay and accommodation</h2>
-        <p className="mt-2 text-2xl font-semibold">
-          {formatZar(forecast.stay.totalCents)}
-        </p>
-        <p className="mt-2 text-sm text-muted">
-          {forecast.stay.rooms}{" "}
-          {forecast.stay.rooms === 1 ? "room" : "rooms"} ·{" "}
-          {forecast.stay.nights}{" "}
-          {forecast.stay.nights === 1 ? "night" : "nights"} ·{" "}
-          {formatZar(forecast.stay.nightlyCents)} per room per night
-        </p>
-        <p className="mt-2 text-sm text-muted">{forecast.stay.note}</p>
+        <h2 className="font-medium">Accommodation</h2>
+        {forecast.stay ? (
+          <>
+            <p className="mt-1 text-sm text-muted">{forecast.stay.name}</p>
+            <p className="mt-2 text-2xl font-semibold">
+              {formatZar(forecast.stay.totalCents)}
+            </p>
+            <p className="mt-2 text-sm text-muted">
+              {forecast.stay.area} · {forecast.stay.rooms}{" "}
+              {forecast.stay.rooms === 1 ? "unit" : "units"} ·{" "}
+              {forecast.stay.nights}{" "}
+              {forecast.stay.nights === 1 ? "night" : "nights"} ·{" "}
+              {formatZar(forecast.stay.nightlyCents)} per unit per night
+            </p>
+            <p className="mt-3 text-sm">
+              <Link href={planHref} className="font-medium hover:text-accent">
+                Change stay on Plan
+              </Link>
+            </p>
+          </>
+        ) : (
+          <p className="mt-2 text-sm text-muted">
+            Choose a stay on{" "}
+            <Link href={planHref} className="font-medium hover:text-accent">
+              Plan
+            </Link>{" "}
+            to add accommodation costs.
+          </p>
+        )}
       </Card>
 
       <Card>
-        <h2 className="font-medium">Transport estimates</h2>
+        <h2 className="font-medium">Chosen places</h2>
         <p className="mt-1 text-sm text-muted">
-          Local getting-around for {forecast.travelDays}{" "}
-          {forecast.travelDays === 1 ? "day" : "days"}. These sit outside the
-          planned total so you can compare Uber, bus, and fuel.
+          Costs for {forecast.travellers}{" "}
+          {forecast.travellers === 1 ? "traveller" : "travellers"}, using each
+          company’s visit or hourly rate.
         </p>
-        <ul className="mt-4 divide-y divide-border">
-          <TransportRow
-            label="Uber"
-            detail="Ride-hail around the destination"
-            amount={forecast.transport.uberCents}
-          />
-          <TransportRow
-            label="Bus / minibus taxi"
-            detail="Cheaper public option"
-            amount={forecast.transport.busCents}
-          />
-          <TransportRow
-            label="Fuel"
-            detail="Private car, local driving and parking"
-            amount={forecast.transport.fuelCents}
-          />
-        </ul>
-      </Card>
-
-      <Card>
-        <h2 className="font-medium">Recommended on this budget</h2>
-        <p className="mt-1 text-sm text-muted">
-          Nearby food spots and activities that still fit after stay, for{" "}
-          {forecast.travellers}{" "}
-          {forecast.travellers === 1 ? "traveller" : "travellers"}.
-        </p>
-        {recommended.length === 0 ? (
+        {forecast.activities.length === 0 ? (
           <p className="mt-4 text-sm text-muted">
-            This budget is tight for stay. Increase it to leave room for food
-            and activities.
+            Add activities or food on{" "}
+            <Link href={planHref} className="font-medium hover:text-accent">
+              Plan
+            </Link>{" "}
+            to see their costs here.
           </p>
         ) : (
           <div className="mt-4 space-y-6">
-            <PlaceGroup title="Food spots" places={recommendedFood} />
-            <PlaceGroup title="Activities" places={recommendedActivities} />
+            <PlaceGroup title="Activities" places={activities} />
+            <PlaceGroup title="Food spots" places={food} />
           </div>
         )}
-        <p className="mt-4 text-sm text-muted">
-          Food and activities in this plan:{" "}
-          {formatZar(forecast.recommendedTotalCents)}
-        </p>
       </Card>
 
-      {stretch.length > 0 ? (
-        <Card>
-          <h2 className="font-medium">Other nearby places</h2>
-          <p className="mt-1 text-sm text-muted">
-            These were not added to the plan, either because the budget is used
-            up or because cheaper options were picked first.
+      <Card>
+        <h2 className="font-medium">Transport from your stay</h2>
+        {!forecast.stay ? (
+          <p className="mt-2 text-sm text-muted">
+            Choose a stay on{" "}
+            <Link href={planHref} className="font-medium hover:text-accent">
+              Plan
+            </Link>{" "}
+            to estimate Uber, bus, and fuel from that address to each place.
           </p>
-          <ul className="mt-4 divide-y divide-border">
-            {stretch.slice(0, 8).map((place) => (
-              <li key={place.id} className="flex justify-between gap-4 py-3">
-                <div>
-                  <p className="font-medium">{place.name}</p>
-                  <p className="text-sm text-muted">
-                    {place.kind === "food" ? "Food · " : ""}
-                    {place.area}
-                  </p>
-                </div>
-                <p className="text-sm font-medium">
-                  {formatZar(place.partyCostCents)}
-                </p>
-              </li>
-            ))}
-          </ul>
-        </Card>
-      ) : null}
+        ) : forecast.legs.length === 0 ? (
+          <p className="mt-2 text-sm text-muted">
+            Add places on{" "}
+            <Link href={planHref} className="font-medium hover:text-accent">
+              Plan
+            </Link>{" "}
+            to see rides from {forecast.stay.name}.
+          </p>
+        ) : (
+          <>
+            <p className="mt-1 text-sm text-muted">
+              Round-trip estimates from {forecast.stay.name} to each chosen
+              place.
+            </p>
+            <ul className="mt-4 divide-y divide-border">
+              {forecast.legs.map((leg) => (
+                <TransportLegRow key={leg.toId} stayName={forecast.stay!.name} leg={leg} />
+              ))}
+            </ul>
+            <ul className="mt-2 divide-y divide-border border-t border-border">
+              <TransportRow
+                label="Uber total"
+                detail="Ride-hail for every chosen place"
+                amount={forecast.transport.uberCents}
+              />
+              <TransportRow
+                label="Bus / minibus taxi total"
+                detail="Cheaper public option"
+                amount={forecast.transport.busCents}
+              />
+              <TransportRow
+                label="Fuel total"
+                detail="Private car, round trips and parking"
+                amount={forecast.transport.fuelCents}
+              />
+            </ul>
+          </>
+        )}
+      </Card>
     </div>
   );
 }
@@ -216,11 +248,18 @@ function PlaceGroup({
           <li key={place.id} className="flex justify-between gap-4 py-3">
             <div>
               <p className="font-medium">{place.name}</p>
-              <p className="text-sm text-muted">
-                {place.area}
+              <div className="mt-1">
+                <OpenBadge status={place.openStatus} />
+              </div>
+              <p className="mt-1 text-sm text-muted">
+                {place.company} · {place.area}
+              </p>
+              <p className="mt-1 text-sm text-muted">
                 {place.estimatedCostCents === 0
-                  ? " · Free"
-                  : ` · ${formatZar(place.estimatedCostCents)} each`}
+                  ? "Free visit"
+                  : place.priceUnit === "hour"
+                    ? `${formatZar(place.estimatedCostCents)} per hour · ${place.typicalHours} h`
+                    : `${formatZar(place.estimatedCostCents)} per visit`}
               </p>
             </div>
             <p className="text-sm font-medium">
@@ -230,6 +269,37 @@ function PlaceGroup({
         ))}
       </ul>
     </div>
+  );
+}
+
+function TransportLegRow({
+  stayName,
+  leg,
+}: {
+  stayName: string;
+  leg: TransportLeg;
+}) {
+  return (
+    <li className="py-3">
+      <p className="font-medium">{leg.toName}</p>
+      <p className="mt-1 text-sm text-muted">
+        From {stayName} · {leg.distanceKm} km round trip
+      </p>
+      <dl className="mt-2 grid grid-cols-3 gap-2 text-sm">
+        <div>
+          <dt className="text-muted">Uber</dt>
+          <dd>{formatZar(leg.uberCents)}</dd>
+        </div>
+        <div>
+          <dt className="text-muted">Bus</dt>
+          <dd>{formatZar(leg.busCents)}</dd>
+        </div>
+        <div>
+          <dt className="text-muted">Fuel</dt>
+          <dd>{formatZar(leg.fuelCents)}</dd>
+        </div>
+      </dl>
+    </li>
   );
 }
 

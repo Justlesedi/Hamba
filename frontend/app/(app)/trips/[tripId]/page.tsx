@@ -62,8 +62,8 @@ export default async function Page({
         </div>
       </Card>
       <p className="text-sm text-muted">
-        Open Plan for nearby activities, or Budget to forecast stay, transport,
-        and what you can afford.
+        Open Plan to choose a stay and the places you want to visit. Budget then
+        costs only those choices.
       </p>
     </section>
   );

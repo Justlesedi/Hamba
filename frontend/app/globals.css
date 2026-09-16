@@ -9,6 +9,9 @@
   --accent: #c45c26;
   --accent-hover: #a94b1d;
   --food: #2f6f5e;
+  --stay: #3d5a80;
+  --open: #15803d;
+  --closed: #b91c1c;
 }
 
 @theme inline {
@@ -49,8 +52,48 @@ body {
   background: var(--food);
 }
 
+.hamba-pin-stay span {
+  background: var(--stay);
+}
+
 .hamba-pin-selected span {
   width: 18px;
   height: 18px;
   background: var(--foreground);
+}
+
+.hamba-pin-picked span {
+  box-shadow: 0 0 0 3px var(--foreground);
+}
+
+.hamba-pin-closed span {
+  opacity: 0.45;
+}
+
+.hamba-hours {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.8125rem;
+  font-weight: 600;
+}
+
+.hamba-hours::before {
+  content: "";
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 999px;
+  background: currentColor;
+}
+
+.hamba-open {
+  color: var(--open);
+}
+
+.hamba-closed {
+  color: var(--closed);
+}
+
+input[type="checkbox"] {
+  accent-color: var(--accent);
 }

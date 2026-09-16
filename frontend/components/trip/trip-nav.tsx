@@ -7,15 +7,12 @@ export function TripNav({ tripId }: { tripId: string }) {
   const pathname = usePathname();
   const overview = `/trips/${tripId}`;
   const plan = `/trips/${tripId}/itinerary`;
+  const budget = `/trips/${tripId}/budget`;
 
   const links = [
     { href: overview, label: "Overview", current: pathname === overview },
     { href: plan, label: "Plan", current: pathname === plan },
-    {
-      href: `/trips/${tripId}/budget`,
-      label: "Budget",
-      current: pathname === `/trips/${tripId}/budget`,
-    },
+    { href: budget, label: "Budget", current: pathname === budget },
   ];
 
   return (

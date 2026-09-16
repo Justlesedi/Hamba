@@ -8,6 +8,7 @@ export type Trip = {
   currency: "ZAR" | string;
   budgetCents: number | null;
   travellers: number;
+  stayId: string | null;
   createdAt: Date;
   updatedAt: Date;
 };

@@ -1,4 +1,6 @@
-import type { PlaceKind } from "./activity";
+import type { PlaceKind, PriceUnit } from "./activity";
+import type { OpenStatus } from "../lib/hours";
+import type { StayKind } from "./stay";
 
 export type TransportEstimates = {
   uberCents: number;
@@ -6,31 +8,43 @@ export type TransportEstimates = {
   fuelCents: number;
 };
 
+export type TransportLeg = TransportEstimates & {
+  toId: string;
+  toName: string;
+  distanceKm: number;
+};
+
 export type ForecastActivity = {
   id: string;
   name: string;
   area: string;
   kind: PlaceKind;
+  company: string;
+  operatingHours: string;
+  openStatus: OpenStatus;
+  priceUnit: PriceUnit;
+  typicalHours: number;
   estimatedCostCents: number;
   partyCostCents: number;
-  recommended: boolean;
 };
 
 export type BudgetForecast = {
-  budgetCents: number;
+  budgetCents: number | null;
   nights: number;
-  travelDays: number;
   travellers: number;
   stay: {
+    listingId: string;
+    name: string;
+    area: string;
+    kind: StayKind;
     nightlyCents: number;
     rooms: number;
     nights: number;
     totalCents: number;
-    note: string;
-  };
-  transport: TransportEstimates;
+  } | null;
   activities: ForecastActivity[];
-  recommendedTotalCents: number;
+  legs: TransportLeg[];
+  transport: TransportEstimates;
   plannedTotalCents: number;
-  remainingCents: number;
+  remainingCents: number | null;
 };

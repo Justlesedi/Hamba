@@ -3,6 +3,11 @@ import {
   haversineKm,
   MAX_ACTIVITY_DISTANCE_KM,
 } from "../lib/geo";
+import {
+  activityCostCents,
+  activityPricing,
+} from "../lib/activities/costs";
+import { openStatusFromHours } from "../lib/hours";
 import type { Activity, NearbyActivity } from "../types/activity";
 
 type ActivityRow = {
@@ -30,7 +35,18 @@ function mapActivity(row: ActivityRow): Activity {
     operatingHours: row.operatingHours,
     area: row.area,
     kind,
-    estimatedCostCents: Number(row.estimatedCostCents ?? 0),
+    estimatedCostCents: Number(row.estimatedCostCents ?? 0) || activityCostCents(row.id),
+  };
+}
+
+function withPlanFields(activity: Activity, distanceKm: number): NearbyActivity {
+  const pricing = activityPricing(activity.id, activity.kind);
+  return {
+    ...activity,
+    distanceKm,
+    priceUnit: pricing.priceUnit,
+    typicalHours: pricing.typicalHours,
+    openStatus: openStatusFromHours(activity.operatingHours),
   };
 }
 
@@ -49,14 +65,11 @@ export function searchNearbyActivities(
 
   return rows
     .map((row) => {
+      const activity = mapActivity(row);
       const distanceKm =
-        Math.round(haversineKm(latitude, longitude, row.latitude, row.longitude) * 10) /
+        Math.round(haversineKm(latitude, longitude, activity.latitude, activity.longitude) * 10) /
         10;
-
-      return {
-        ...mapActivity(row),
-        distanceKm,
-      };
+      return withPlanFields(activity, distanceKm);
     })
     .filter((activity) => activity.distanceKm <= cap)
     .sort((a, b) => a.distanceKm - b.distanceKm);
@@ -71,4 +84,20 @@ export function getActivityById(id: string) {
     .get(id) as ActivityRow | undefined;
 
   return row ? mapActivity(row) : null;
+}
+
+export function getNearbyActivityById(
+  id: string,
+  from?: { lat: number; lng: number },
+) {
+  const activity = getActivityById(id);
+  if (!activity) {
+    return null;
+  }
+  const distanceKm = from
+    ? Math.round(
+        haversineKm(from.lat, from.lng, activity.latitude, activity.longitude) * 10,
+      ) / 10
+    : 0;
+  return withPlanFields(activity, distanceKm);
 }
