@@ -62,8 +62,12 @@ export default async function Page({
         </div>
       </Card>
       <p className="text-sm text-muted">
-        Open Plan to choose a stay and the places you want to visit. Budget then
-        costs only those choices.
+        Open Plan to choose a stay and the places you want to visit. Budget
+        costs those choices as a forecast.{" "}
+        <Link href={`/bookings/trip/${trip.id}`} className="font-medium hover:text-accent">
+          Book a stay and any activities that need a reservation
+        </Link>{" "}
+        from Bookings, separate from Plan.
       </p>
     </section>
   );

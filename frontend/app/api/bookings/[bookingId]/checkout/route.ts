@@ -1,15 +1,9 @@
-export async function GET() {
-  return new Response(null, { status: 204 });
-}
+import { NextResponse } from "next/server";
 
-export async function POST() {
-  return new Response(null, { status: 204 });
-}
-
-export async function PATCH() {
-  return new Response(null, { status: 204 });
-}
-
-export async function DELETE() {
-  return new Response(null, { status: 204 });
+export async function GET(
+  request: Request,
+  context: { params: Promise<{ bookingId: string }> },
+) {
+  const { bookingId } = await context.params;
+  return NextResponse.redirect(new URL(`/bookings/${bookingId}`, request.url));
 }

@@ -83,7 +83,28 @@ function parseDayNames(text: string) {
   if (range) {
     return daySet(range[1], range[2]);
   }
-  return null;
+
+  if (/\bdaily\b|\bevery day\b|\bopen 24\b/.test(text)) {
+    return null;
+  }
+
+  const named = new Set<number>();
+  for (const match of text.matchAll(
+    /\b(mondays?|mon|tuesdays?|tues|tue|wednesdays?|wed|thursdays?|thurs|thur|thu|fridays?|fri|saturdays?|sat|sundays?|sun)\b/g,
+  )) {
+    const key = match[1].replace(/s$/, "");
+    const index = WEEKDAY_INDEX[key];
+    if (index != null) {
+      named.add(index);
+    }
+  }
+
+  const closed = closedDays(text);
+  for (const day of closed) {
+    named.delete(day);
+  }
+
+  return named.size > 0 ? named : null;
 }
 
 function closedDays(text: string) {

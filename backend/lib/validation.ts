@@ -134,3 +134,43 @@ export type TogglePlaceFormState =
       selectedActivityIds?: string[];
     }
   | undefined;
+
+export const createBookingSchema = z.object({
+  tripId: z.string().trim().min(1, "Trip is missing."),
+  stayId: z.string().trim().min(1, "Choose a stay to book."),
+  activityIds: z.array(z.string().trim().min(1)).default([]),
+});
+
+export const chooseFlightsSchema = z.object({
+  tripId: z.string().trim().min(1, "Trip is missing."),
+  outboundFlightId: z.string().trim(),
+  returnFlightId: z.string().trim(),
+});
+
+export type ChooseFlightsFormState =
+  | {
+      message?: string;
+      outboundFlightId?: string | null;
+      returnFlightId?: string | null;
+    }
+  | undefined;
+
+export const cancelBookingSchema = z.object({
+  bookingId: z.string().trim().min(1, "Booking is missing."),
+});
+
+export type CreateBookingFormState =
+  | {
+      errors?: {
+        stayId?: string[];
+        activityIds?: string[];
+      };
+      message?: string;
+    }
+  | undefined;
+
+export type CancelBookingFormState =
+  | {
+      message?: string;
+    }
+  | undefined;

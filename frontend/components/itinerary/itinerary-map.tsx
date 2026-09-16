@@ -162,8 +162,12 @@ export default function ItineraryMap({
           stay.openStatus.state === "closed",
           "stay",
         ),
-        title: stay.name,
-        riseOnHover: true,
+        title:
+          stay.openStatus.state === "closed"
+            ? `${stay.name} (closed)`
+            : stay.name,
+        interactive: stay.openStatus.state !== "closed",
+        riseOnHover: stay.openStatus.state !== "closed",
       });
 
       marker.on("click", () => {
@@ -188,7 +192,8 @@ export default function ItineraryMap({
           activity.openStatus.state === "closed"
             ? `${activity.name} (closed)`
             : activity.name,
-        riseOnHover: true,
+        interactive: activity.openStatus.state !== "closed",
+        riseOnHover: activity.openStatus.state !== "closed",
       });
 
       marker.on("click", () => {

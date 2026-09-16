@@ -1,6 +1,7 @@
 import type { PlaceKind, PriceUnit } from "./activity";
 import type { OpenStatus } from "../lib/hours";
 import type { StayKind } from "./stay";
+import type { Flight } from "./flight";
 
 export type TransportEstimates = {
   uberCents: number;
@@ -45,6 +46,11 @@ export type BudgetForecast = {
   activities: ForecastActivity[];
   legs: TransportLeg[];
   transport: TransportEstimates;
+  flights: {
+    outbound: Flight | null;
+    inbound: Flight | null;
+    totalCents: number;
+  };
   plannedTotalCents: number;
   remainingCents: number | null;
 };

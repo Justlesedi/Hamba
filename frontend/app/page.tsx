@@ -12,7 +12,8 @@ export default async function Page() {
       </h1>
       <p className="text-lg text-muted">
         Start with a trip, then choose a stay and the places you want to visit.
-        Budget follows your plan. Booking comes next.
+        Budget follows your plan. Book stays and bookable activities when you
+        are ready.
       </p>
       <div className="flex flex-wrap gap-3">
         {user ? (

@@ -94,6 +94,7 @@ body {
   color: var(--closed);
 }
 
-input[type="checkbox"] {
+input[type="checkbox"],
+input[type="radio"] {
   accent-color: var(--accent);
 }

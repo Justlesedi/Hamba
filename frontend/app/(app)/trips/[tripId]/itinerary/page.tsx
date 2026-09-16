@@ -42,8 +42,9 @@ export default async function Page({
       <div>
         <h1 className="text-2xl font-semibold">Plan</h1>
         <p className="text-sm text-muted">
-          Choose a stay and the places you want around {trip.destination}.
-          Budget will only cost those choices.
+          Choose a stay and the places you want around {trip.destination} so
+          Budget can forecast costs. Closed places cannot be added. Booking is
+          separate.
         </p>
       </div>
       <ItineraryExplorer

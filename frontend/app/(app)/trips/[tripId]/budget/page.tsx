@@ -31,7 +31,8 @@ export default async function Page({
         <h1 className="text-2xl font-semibold">Budget</h1>
         <p className="text-sm text-muted">
           Costs follow what you chose on Plan for {trip.destination}: stay,
-          each activity, and transport from the stay to those places.
+          each activity, and transport from the stay to those places. This is a
+          forecast only. Book stays and bookable activities under Bookings.
         </p>
       </div>
       <BudgetSummary

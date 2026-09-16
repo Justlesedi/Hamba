@@ -5,6 +5,7 @@ import {
 } from "../lib/activities/costs";
 import { estimateLegCents, tripNights } from "../lib/budget/estimates";
 import { haversineKm } from "../lib/geo";
+import { getFlightById } from "../lib/flights/search";
 import { zarToCents } from "../lib/money";
 import { getNearbyActivityById } from "./activities";
 import { listTripPlaceIds } from "./plan";
@@ -94,7 +95,10 @@ export function forecastTripBudget(
     (sum, place) => sum + place.partyCostCents,
     0,
   );
-  const plannedTotalCents = stayTotal + placesTotal;
+  const outbound = getFlightById(trip.outboundFlightId ?? "", trip.travellers);
+  const inbound = getFlightById(trip.returnFlightId ?? "", trip.travellers);
+  const flightTotalCents = (outbound?.partyCents ?? 0) + (inbound?.partyCents ?? 0);
+  const plannedTotalCents = stayTotal + placesTotal + flightTotalCents;
   const transport = legs.reduce(
     (sum, leg) => ({
       uberCents: sum.uberCents + leg.uberCents,
@@ -123,6 +127,11 @@ export function forecastTripBudget(
     activities,
     legs,
     transport,
+    flights: {
+      outbound,
+      inbound,
+      totalCents: flightTotalCents,
+    },
     plannedTotalCents,
     remainingCents:
       budgetCents == null ? null : budgetCents - plannedTotalCents,

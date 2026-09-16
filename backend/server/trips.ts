@@ -14,6 +14,8 @@ type TripRow = {
   budgetCents: number | null;
   travellers: number;
   stayId: string | null;
+  outboundFlightId: string | null;
+  returnFlightId: string | null;
   createdAt: string;
   updatedAt: string;
 };
@@ -30,6 +32,8 @@ function mapTrip(row: TripRow): Trip {
     budgetCents: row.budgetCents,
     travellers: row.travellers,
     stayId: row.stayId ?? null,
+    outboundFlightId: row.outboundFlightId ?? null,
+    returnFlightId: row.returnFlightId ?? null,
     createdAt: new Date(row.createdAt),
     updatedAt: new Date(row.updatedAt),
   };

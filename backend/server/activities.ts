@@ -6,6 +6,7 @@ import {
 import {
   activityCostCents,
   activityPricing,
+  activityRequiresBooking,
 } from "../lib/activities/costs";
 import { openStatusFromHours } from "../lib/hours";
 import type { Activity, NearbyActivity } from "../types/activity";
@@ -47,6 +48,7 @@ function withPlanFields(activity: Activity, distanceKm: number): NearbyActivity 
     priceUnit: pricing.priceUnit,
     typicalHours: pricing.typicalHours,
     openStatus: openStatusFromHours(activity.operatingHours),
+    requiresBooking: activityRequiresBooking(activity),
   };
 }
 

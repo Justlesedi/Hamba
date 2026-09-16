@@ -107,6 +107,15 @@ export function ItineraryExplorer({
     }
   }, [placeState]);
 
+  useEffect(() => {
+    setPickedIds((current) =>
+      current.filter((id) => {
+        const place = activities.find((activity) => activity.id === id);
+        return !place || !isClosed(place.openStatus);
+      }),
+    );
+  }, [activities]);
+
   const chosenStay = useMemo(
     () => stays.find((stay) => stay.id === chosenStayId) ?? null,
     [chosenStayId, stays],
@@ -143,21 +152,41 @@ export function ItineraryExplorer({
   }, [center.lat, center.lng, tripId]);
 
   useEffect(() => {
+    const nextStay = stays.find((listing) => !isClosed(listing.openStatus));
+    const nextActivity = firstOpenActivity(activities);
+
     if (selectedKind === "stay") {
-      if (selectedId && !stays.some((stay) => stay.id === selectedId)) {
-        setSelectedId(stays[0]?.id ?? activities[0]?.id ?? null);
-        setSelectedKind(stays[0] ? "stay" : activities[0] ? "activity" : null);
+      const stay = stays.find((listing) => listing.id === selectedId);
+      if (stay && !isClosed(stay.openStatus)) {
+        return;
       }
+    } else if (selectedKind === "activity") {
+      const place = activities.find((activity) => activity.id === selectedId);
+      if (place && !isClosed(place.openStatus)) {
+        return;
+      }
+    }
+
+    const nextId =
+      selectedKind === "stay"
+        ? (nextStay?.id ?? nextActivity?.id ?? null)
+        : (nextActivity?.id ?? nextStay?.id ?? null);
+    const nextKind = nextId
+      ? nextStay && nextId === nextStay.id
+        ? "stay"
+        : nextActivity && nextId === nextActivity.id
+          ? "activity"
+          : nextStay
+            ? "stay"
+            : "activity"
+      : null;
+
+    if (nextId === selectedId && nextKind === selectedKind) {
       return;
     }
 
-    if (selectedId && !activities.some((place) => place.id === selectedId)) {
-      const nextActivity = firstOpenActivity(activities);
-      setSelectedId(nextActivity?.id ?? stays[0]?.id ?? null);
-      setSelectedKind(
-        nextActivity ? "activity" : stays[0] ? "stay" : null,
-      );
-    }
+    setSelectedId(nextId);
+    setSelectedKind(nextKind);
   }, [activities, selectedId, selectedKind, stays]);
 
   function useMyLocation() {
@@ -185,7 +214,7 @@ export function ItineraryExplorer({
 
   function selectStay(id: string) {
     const stay = stays.find((listing) => listing.id === id);
-    if (stay && isClosed(stay.openStatus) && stay.id !== chosenStayId) {
+    if (!stay || isClosed(stay.openStatus)) {
       return;
     }
     setSelectedKind("stay");
@@ -194,12 +223,7 @@ export function ItineraryExplorer({
 
   function selectActivity(id: string) {
     const place = activities.find((activity) => activity.id === id);
-    if (
-      place &&
-      isClosed(place.openStatus) &&
-      !selectedActivityIds.includes(id) &&
-      !pickedIds.includes(id)
-    ) {
+    if (!place || isClosed(place.openStatus)) {
       return;
     }
     setSelectedKind("activity");
@@ -211,13 +235,7 @@ export function ItineraryExplorer({
 
   function togglePicked(id: string) {
     const place = activities.find((activity) => activity.id === id);
-    const alreadyPicked = pickedIds.includes(id);
-    if (
-      place &&
-      isClosed(place.openStatus) &&
-      !alreadyPicked &&
-      !selectedActivityIds.includes(id)
-    ) {
+    if (!place || isClosed(place.openStatus)) {
       return;
     }
     setSelectedKind("activity");
@@ -328,6 +346,7 @@ export function ItineraryExplorer({
           pickedPlaces={pickedPlaces}
           pickedToAdd={pickedToAdd}
           pickedToRemove={pickedToRemove}
+          selectedActivityIds={selectedActivityIds}
           placeMessage={placeState?.message}
           placePending={placePending}
           placeAction={placeAction}
@@ -345,6 +364,7 @@ function ChosenPlan({
   pickedPlaces,
   pickedToAdd,
   pickedToRemove,
+  selectedActivityIds,
   placeMessage,
   placePending,
   placeAction,
@@ -356,6 +376,7 @@ function ChosenPlan({
   pickedPlaces: NearbyActivity[];
   pickedToAdd: string[];
   pickedToRemove: string[];
+  selectedActivityIds: string[];
   placeMessage?: string;
   placePending: boolean;
   placeAction: (formData: FormData) => void;
@@ -392,10 +413,26 @@ function ChosenPlan({
       <section>
         <h3 className="text-sm font-medium text-muted">Activities</h3>
         {chosenActivities.length > 0 ? (
-          <ol className="mt-2 list-decimal space-y-1 pl-5">
+          <ol className="mt-2 list-decimal space-y-2 pl-5">
             {chosenActivities.map((place) => (
               <li key={place.id} className="font-medium">
-                {place.name}
+                <div className="flex items-start justify-between gap-3">
+                  <span>{place.name}</span>
+                  {selectedActivityIds.includes(place.id) ? (
+                    <form action={placeAction}>
+                      <input type="hidden" name="tripId" value={tripId} />
+                      <input type="hidden" name="intent" value="remove" />
+                      <input type="hidden" name="activityId" value={place.id} />
+                      <Button
+                        variant="ghost"
+                        className="px-0 py-0"
+                        disabled={placePending}
+                      >
+                        Remove
+                      </Button>
+                    </form>
+                  ) : null}
+                </div>
               </li>
             ))}
           </ol>
@@ -407,10 +444,26 @@ function ChosenPlan({
       <section>
         <h3 className="text-sm font-medium text-muted">Food spots</h3>
         {chosenFood.length > 0 ? (
-          <ul className="mt-2 list-disc space-y-1 pl-5">
+          <ul className="mt-2 list-disc space-y-2 pl-5">
             {chosenFood.map((place) => (
               <li key={place.id} className="font-medium">
-                {place.name}
+                <div className="flex items-start justify-between gap-3">
+                  <span>{place.name}</span>
+                  {selectedActivityIds.includes(place.id) ? (
+                    <form action={placeAction}>
+                      <input type="hidden" name="tripId" value={tripId} />
+                      <input type="hidden" name="intent" value="remove" />
+                      <input type="hidden" name="activityId" value={place.id} />
+                      <Button
+                        variant="ghost"
+                        className="px-0 py-0"
+                        disabled={placePending}
+                      >
+                        Remove
+                      </Button>
+                    </form>
+                  ) : null}
+                </div>
               </li>
             ))}
           </ul>
@@ -522,7 +575,7 @@ function StayList({
                 >
                   <button
                     type="button"
-                    disabled={closed && !chosen}
+                    disabled={closed}
                     onClick={() => onSelect(stay.id)}
                     className="min-w-0 flex-1 text-left disabled:cursor-not-allowed"
                   >
@@ -535,7 +588,7 @@ function StayList({
                     </p>
                     <p className="mt-1 text-sm">{formatZar(stay.totalCents)}</p>
                   </button>
-                  {!closed && (current || chosen) ? (
+                  {chosen || (!closed && current) ? (
                     <form action={action} className="shrink-0">
                       <input type="hidden" name="tripId" value={tripId} />
                       {chosen ? (
@@ -548,7 +601,7 @@ function StayList({
                       ) : (
                         <>
                           <input type="hidden" name="stayId" value={stay.id} />
-                          <Button disabled={pending}>
+                          <Button disabled={pending || closed}>
                             {pending ? "Saving…" : "Choose"}
                           </Button>
                         </>
@@ -605,14 +658,14 @@ function PlaceList({
             const picked = pickedIds.includes(place.id);
             const inPlan = selectedActivityIds.includes(place.id);
             const closed = isClosed(place.openStatus);
-            const locked = closed && !picked && !inPlan;
+            const locked = closed;
             return (
               <li key={place.id}>
                 <div
                   className={`flex items-start gap-3 px-6 py-4 ${
                     locked
                       ? "opacity-60"
-                      : picked || current
+                      : picked || current || inPlan
                         ? "bg-background"
                         : "hover:bg-background/70"
                   }`}

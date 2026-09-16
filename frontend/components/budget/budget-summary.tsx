@@ -153,6 +153,54 @@ function ForecastResults({
         )}
       </Card>
 
+      {forecast.flights.outbound || forecast.flights.inbound ? (
+      <Card>
+        <h2 className="font-medium">Flights (forecast)</h2>
+          <ul className="mt-2 divide-y divide-border">
+            {forecast.flights.outbound ? (
+              <li className="flex justify-between gap-4 py-3">
+                <div>
+                  <p className="text-sm text-muted">Outbound</p>
+                  <p className="mt-1 font-medium">
+                    {forecast.flights.outbound.airline}{" "}
+                    {forecast.flights.outbound.flightNumber}
+                  </p>
+                  <p className="mt-1 text-sm text-muted">
+                    {forecast.flights.outbound.fromCode}{" "}
+                    {forecast.flights.outbound.departLocal} →{" "}
+                    {forecast.flights.outbound.toCode}{" "}
+                    {forecast.flights.outbound.arriveLocal}
+                  </p>
+                </div>
+                <p className="text-sm font-medium">
+                  {formatZar(forecast.flights.outbound.partyCents)}
+                </p>
+              </li>
+            ) : null}
+            {forecast.flights.inbound ? (
+              <li className="flex justify-between gap-4 py-3">
+                <div>
+                  <p className="text-sm text-muted">Return</p>
+                  <p className="mt-1 font-medium">
+                    {forecast.flights.inbound.airline}{" "}
+                    {forecast.flights.inbound.flightNumber}
+                  </p>
+                  <p className="mt-1 text-sm text-muted">
+                    {forecast.flights.inbound.fromCode}{" "}
+                    {forecast.flights.inbound.departLocal} →{" "}
+                    {forecast.flights.inbound.toCode}{" "}
+                    {forecast.flights.inbound.arriveLocal}
+                  </p>
+                </div>
+                <p className="text-sm font-medium">
+                  {formatZar(forecast.flights.inbound.partyCents)}
+                </p>
+              </li>
+            ) : null}
+          </ul>
+      </Card>
+      ) : null}
+
       <Card>
         <h2 className="font-medium">Chosen places</h2>
         <p className="mt-1 text-sm text-muted">
@@ -224,6 +272,22 @@ function ForecastResults({
             </ul>
           </>
         )}
+      </Card>
+
+      <Card>
+        <h2 className="font-medium">Ready to book?</h2>
+        <p className="mt-2 text-sm text-muted">
+          Booking is separate from this forecast. Reserve a stay and any
+          activities that need a booking. Transport is not booked on Hamba.
+        </p>
+        <p className="mt-4">
+          <Link
+            href={`/bookings/trip/${tripId}`}
+            className="font-medium hover:text-accent"
+          >
+            Go to Bookings
+          </Link>
+        </p>
       </Card>
     </div>
   );

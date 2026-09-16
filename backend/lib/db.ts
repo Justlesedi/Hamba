@@ -37,6 +37,8 @@ db.exec(`
     budgetCents INTEGER,
     travellers INTEGER NOT NULL DEFAULT 1,
     stayId TEXT,
+    outboundFlightId TEXT,
+    returnFlightId TEXT,
     createdAt TEXT NOT NULL,
     updatedAt TEXT NOT NULL,
     FOREIGN KEY (userId) REFERENCES users(id) ON DELETE CASCADE
@@ -78,6 +80,54 @@ db.exec(`
     FOREIGN KEY (tripId) REFERENCES trips(id) ON DELETE CASCADE
   );
 
+  CREATE TABLE IF NOT EXISTS bookings (
+    id TEXT PRIMARY KEY,
+    userId TEXT NOT NULL,
+    tripId TEXT NOT NULL,
+    tripTitle TEXT NOT NULL,
+    destination TEXT NOT NULL,
+    startDate TEXT NOT NULL,
+    endDate TEXT NOT NULL,
+    travellers INTEGER NOT NULL,
+    stayId TEXT,
+    stayName TEXT NOT NULL,
+    stayArea TEXT NOT NULL,
+    stayTotalCents INTEGER NOT NULL,
+    outboundFlightId TEXT,
+    outboundLabel TEXT NOT NULL DEFAULT '',
+    outboundCents INTEGER NOT NULL DEFAULT 0,
+    returnFlightId TEXT,
+    returnLabel TEXT NOT NULL DEFAULT '',
+    returnCents INTEGER NOT NULL DEFAULT 0,
+    transportMode TEXT NOT NULL,
+    transportCents INTEGER NOT NULL,
+    placesTotalCents INTEGER NOT NULL,
+    totalCents INTEGER NOT NULL,
+    status TEXT NOT NULL,
+    createdAt TEXT NOT NULL,
+    updatedAt TEXT NOT NULL,
+    FOREIGN KEY (userId) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (tripId) REFERENCES trips(id) ON DELETE CASCADE
+  );
+
+  CREATE INDEX IF NOT EXISTS bookings_userId ON bookings(userId);
+  CREATE INDEX IF NOT EXISTS bookings_tripId ON bookings(tripId);
+  CREATE UNIQUE INDEX IF NOT EXISTS bookings_trip_confirmed
+    ON bookings(tripId) WHERE status = 'confirmed';
+
+  CREATE TABLE IF NOT EXISTS booking_places (
+    bookingId TEXT NOT NULL,
+    activityId TEXT NOT NULL,
+    name TEXT NOT NULL,
+    kind TEXT NOT NULL,
+    company TEXT NOT NULL,
+    area TEXT NOT NULL,
+    amountCents INTEGER NOT NULL,
+    sortOrder INTEGER NOT NULL,
+    PRIMARY KEY (bookingId, activityId),
+    FOREIGN KEY (bookingId) REFERENCES bookings(id) ON DELETE CASCADE
+  );
+
   CREATE TABLE IF NOT EXISTS geocode_cache (
     query TEXT PRIMARY KEY,
     lat REAL NOT NULL,
@@ -108,6 +158,12 @@ db.exec(`
   if (!columns.some((column) => column.name === "stayId")) {
     db.exec(`ALTER TABLE trips ADD COLUMN stayId TEXT`);
   }
+  if (!columns.some((column) => column.name === "outboundFlightId")) {
+    db.exec(`ALTER TABLE trips ADD COLUMN outboundFlightId TEXT`);
+  }
+  if (!columns.some((column) => column.name === "returnFlightId")) {
+    db.exec(`ALTER TABLE trips ADD COLUMN returnFlightId TEXT`);
+  }
 }
 
 {
@@ -123,3 +179,37 @@ db.exec(`
 
 seedActivities(db);
 seedStays(db);
+
+{
+  const columns = db.prepare(`PRAGMA table_info(bookings)`).all() as {
+    name: string;
+  }[];
+  if (columns.length > 0) {
+    if (!columns.some((column) => column.name === "outboundFlightId")) {
+      db.exec(`ALTER TABLE bookings ADD COLUMN outboundFlightId TEXT`);
+    }
+    if (!columns.some((column) => column.name === "outboundLabel")) {
+      db.exec(
+        `ALTER TABLE bookings ADD COLUMN outboundLabel TEXT NOT NULL DEFAULT ''`,
+      );
+    }
+    if (!columns.some((column) => column.name === "outboundCents")) {
+      db.exec(
+        `ALTER TABLE bookings ADD COLUMN outboundCents INTEGER NOT NULL DEFAULT 0`,
+      );
+    }
+    if (!columns.some((column) => column.name === "returnFlightId")) {
+      db.exec(`ALTER TABLE bookings ADD COLUMN returnFlightId TEXT`);
+    }
+    if (!columns.some((column) => column.name === "returnLabel")) {
+      db.exec(
+        `ALTER TABLE bookings ADD COLUMN returnLabel TEXT NOT NULL DEFAULT ''`,
+      );
+    }
+    if (!columns.some((column) => column.name === "returnCents")) {
+      db.exec(
+        `ALTER TABLE bookings ADD COLUMN returnCents INTEGER NOT NULL DEFAULT 0`,
+      );
+    }
+  }
+}

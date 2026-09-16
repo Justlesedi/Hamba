@@ -20,6 +20,7 @@ function revalidateTrip(tripId: string) {
   revalidatePath(`/trips/${tripId}`);
   revalidatePath(`/trips/${tripId}/itinerary`);
   revalidatePath(`/trips/${tripId}/budget`);
+  revalidatePath(`/bookings/trip/${tripId}`);
 }
 
 export async function chooseStayAction(

@@ -14,6 +14,9 @@ export function Header({ user }: { user: PublicUser }) {
           <Link href="/trips" className="text-muted hover:text-foreground">
             Trips
           </Link>
+          <Link href="/bookings" className="text-muted hover:text-foreground">
+            Bookings
+          </Link>
         </nav>
         <div className="flex items-center gap-4">
           <p className="hidden text-sm text-muted sm:block">{user.name}</p>
