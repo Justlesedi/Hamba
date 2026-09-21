@@ -57,8 +57,9 @@ export async function GET(
     selectedStayId: trip.stayId,
     selectedActivityIds: listTripPlaceIds(tripId),
     stays: searchNearbyStays(center.lat, center.lng, {
-      travellers: trip.travellers,
       nights,
+      units: trip.stayUnits,
+      travellers: trip.travellers,
     }),
     activities: searchNearbyActivities(center.lat, center.lng),
   });

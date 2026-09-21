@@ -1,13 +1,18 @@
 "use client";
 
 import dynamic from "next/dynamic";
+import Link from "next/link";
 import { useActionState, useEffect, useMemo, useState } from "react";
 import { chooseStayAction, updatePlacesAction } from "@/app/actions/stays";
-import { MAX_ACTIVITY_DISTANCE_KM } from "@backend/lib/geo";
+import { stayTotalCents } from "@backend/lib/budget/estimates";
+import { formatTravelAway } from "@backend/lib/geo";
 import { formatZar } from "@backend/lib/money";
+import { filterByPriceBand, type PriceBand } from "@backend/lib/price-band";
 import type { NearbyActivity } from "@backend/types/activity";
-import type { QuotedStay } from "@backend/types/stay";
+import { stayKindLabel, stayLayoutLabel, type QuotedStay } from "@backend/types/stay";
 import { OpenBadge } from "@/components/plan/open-badge";
+import { PriceFilter } from "@/components/plan/price-filter";
+import { StayUnitsSelect } from "@/components/stay/stay-units-select";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import type { PlanSelectionKind } from "@/components/itinerary/itinerary-map";
@@ -32,16 +37,9 @@ type ItineraryExplorerProps = {
   initialStays: QuotedStay[];
   initialActivities: NearbyActivity[];
   initialSelectedStayId: string | null;
+  initialStayUnits: number;
   initialSelectedActivityIds: string[];
 };
-
-function formatDistance(km: number) {
-  if (km < 1) {
-    return `${Math.round(km * 1000)} m away`;
-  }
-
-  return `${km.toFixed(1)} km away`;
-}
 
 function isClosed(status: { state: string }) {
   return status.state === "closed";
@@ -54,10 +52,12 @@ function firstOpenActivity(places: NearbyActivity[]) {
 export function ItineraryExplorer({
   tripId,
   destination,
+  travellers,
   initialCenter,
   initialStays,
   initialActivities,
   initialSelectedStayId,
+  initialStayUnits,
   initialSelectedActivityIds,
 }: ItineraryExplorerProps) {
   const [center, setCenter] = useState(initialCenter);
@@ -83,20 +83,28 @@ export function ItineraryExplorer({
   const [loading, setLoading] = useState(false);
   const [stayState, stayAction, stayPending] = useActionState(chooseStayAction, {
     selectedStayId: initialSelectedStayId,
+    selectedStayUnits: initialStayUnits,
   });
   const [placeState, placeAction, placePending] = useActionState(
     updatePlacesAction,
     { selectedActivityIds: initialSelectedActivityIds },
   );
   const [chosenStayId, setChosenStayId] = useState(initialSelectedStayId);
+  const [unitCount, setUnitCount] = useState(initialStayUnits);
   const [selectedActivityIds, setSelectedActivityIds] = useState(
     initialSelectedActivityIds,
   );
   const [pickedIds, setPickedIds] = useState<string[]>([]);
+  const [stayBand, setStayBand] = useState<PriceBand>("all");
+  const [activityBand, setActivityBand] = useState<PriceBand>("all");
+  const [foodBand, setFoodBand] = useState<PriceBand>("all");
 
   useEffect(() => {
     if (stayState?.selectedStayId !== undefined) {
       setChosenStayId(stayState.selectedStayId);
+    }
+    if (stayState?.selectedStayUnits != null) {
+      setUnitCount(stayState.selectedStayUnits);
     }
   }, [stayState]);
 
@@ -122,6 +130,52 @@ export function ItineraryExplorer({
   );
   const nearbyActivities = activities.filter((place) => place.kind !== "food");
   const nearbyFood = activities.filter((place) => place.kind === "food");
+  const visibleStays = useMemo(
+    () =>
+      filterByPriceBand(
+        stays,
+        stayBand,
+        (stay) => stay.nightlyCents,
+        (stay) => stay.id === chosenStayId || stay.id === selectedId,
+      ),
+    [chosenStayId, selectedId, stayBand, stays],
+  );
+  const visibleActivities = useMemo(
+    () =>
+      filterByPriceBand(
+        nearbyActivities,
+        activityBand,
+        (place) => place.estimatedCostCents,
+        (place) =>
+          place.id === selectedId ||
+          pickedIds.includes(place.id) ||
+          selectedActivityIds.includes(place.id),
+      ),
+    [
+      activityBand,
+      nearbyActivities,
+      pickedIds,
+      selectedActivityIds,
+      selectedId,
+    ],
+  );
+  const visibleFood = useMemo(
+    () =>
+      filterByPriceBand(
+        nearbyFood,
+        foodBand,
+        (place) => place.estimatedCostCents,
+        (place) =>
+          place.id === selectedId ||
+          pickedIds.includes(place.id) ||
+          selectedActivityIds.includes(place.id),
+      ),
+    [foodBand, nearbyFood, pickedIds, selectedActivityIds, selectedId],
+  );
+  const mapActivities = useMemo(
+    () => [...visibleActivities, ...visibleFood],
+    [visibleActivities, visibleFood],
+  );
 
   useEffect(() => {
     const handle = window.setTimeout(async () => {
@@ -274,11 +328,32 @@ export function ItineraryExplorer({
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap items-start justify-between gap-3">
-        <p className="max-w-xl text-sm text-muted">
-          Choose a stay and tick every activity or food spot you want within{" "}
-          {MAX_ACTIVITY_DISTANCE_KM} km. Blue pins are stays, orange pins are
-          activities, green pins are food. Budget only costs what you add here.
-        </p>
+        <div className="max-w-xl space-y-2 text-sm text-muted">
+          <p>Closed places stay off the plan.</p>
+          <p className="flex flex-wrap items-center gap-x-4 gap-y-1">
+            <span className="inline-flex items-center gap-1.5">
+              <span
+                className="size-2.5 rounded-full bg-[var(--stay)]"
+                aria-hidden
+              />
+              Blue pins are stays
+            </span>
+            <span className="inline-flex items-center gap-1.5">
+              <span
+                className="size-2.5 rounded-full bg-[var(--accent)]"
+                aria-hidden
+              />
+              Orange pins are activities
+            </span>
+            <span className="inline-flex items-center gap-1.5">
+              <span
+                className="size-2.5 rounded-full bg-[var(--food)]"
+                aria-hidden
+              />
+              Green pins are food
+            </span>
+          </p>
+        </div>
         <Button type="button" variant="secondary" onClick={useMyLocation}>
           Use my location
         </Button>
@@ -290,8 +365,8 @@ export function ItineraryExplorer({
       <ItineraryMap
         key={tripId}
         center={center}
-        stays={stays}
-        activities={activities}
+        stays={visibleStays}
+        activities={mapActivities}
         selectedId={selectedId}
         selectedKind={selectedKind}
         pickedActivityIds={pickedIds}
@@ -304,20 +379,35 @@ export function ItineraryExplorer({
       <div className="space-y-4">
           <StayList
             tripId={tripId}
-            destination={destination}
-            stays={stays}
+            stays={visibleStays}
+            emptyLabel={
+              stays.length === 0
+                ? "No stays nearby."
+                : "No stays in this price range."
+            }
+            priceBand={stayBand}
+            onPriceBandChange={setStayBand}
             selectedId={selectedKind === "stay" ? selectedId : null}
             chosenStayId={chosenStayId}
+            travellers={travellers}
+            unitCount={unitCount}
             loading={loading}
             pending={stayPending}
             message={stayState?.message}
             action={stayAction}
             onSelect={selectStay}
+            onUnitsChange={setUnitCount}
           />
         <PlaceList
           title="Activities"
-          emptyLabel={`No listed activities within ${MAX_ACTIVITY_DISTANCE_KM} km of ${destination} yet. Move the map if you are exploring nearby towns.`}
-          places={nearbyActivities}
+          emptyLabel={
+            nearbyActivities.length === 0
+              ? "No activities nearby."
+              : "No activities in this price range."
+          }
+          places={visibleActivities}
+          priceBand={activityBand}
+          onPriceBandChange={setActivityBand}
           selectedId={selectedKind === "activity" ? selectedId : null}
           pickedIds={pickedIds}
           selectedActivityIds={selectedActivityIds}
@@ -327,8 +417,14 @@ export function ItineraryExplorer({
         />
         <PlaceList
           title="Food spots"
-          emptyLabel={`No listed food spots within ${MAX_ACTIVITY_DISTANCE_KM} km of ${destination} yet. Move the map if you are exploring nearby towns.`}
-          places={nearbyFood}
+          emptyLabel={
+            nearbyFood.length === 0
+              ? "No food spots nearby."
+              : "No food spots in this price range."
+          }
+          places={visibleFood}
+          priceBand={foodBand}
+          onPriceBandChange={setFoodBand}
           selectedId={selectedKind === "activity" ? selectedId : null}
           pickedIds={pickedIds}
           selectedActivityIds={selectedActivityIds}
@@ -342,6 +438,7 @@ export function ItineraryExplorer({
         <ChosenPlan
           tripId={tripId}
           stay={stayForSummary}
+          unitCount={unitCount}
           chosenPlaces={chosenPlaces}
           pickedPlaces={pickedPlaces}
           pickedToAdd={pickedToAdd}
@@ -360,6 +457,7 @@ export function ItineraryExplorer({
 function ChosenPlan({
   tripId,
   stay,
+  unitCount,
   chosenPlaces,
   pickedPlaces,
   pickedToAdd,
@@ -372,6 +470,7 @@ function ChosenPlan({
 }: {
   tripId: string;
   stay: QuotedStay | null;
+  unitCount: number;
   chosenPlaces: NearbyActivity[];
   pickedPlaces: NearbyActivity[];
   pickedToAdd: string[];
@@ -404,7 +503,21 @@ function ChosenPlan({
       <section>
         <h3 className="text-sm font-medium text-muted">Stay</h3>
         {stay ? (
-          <p className="mt-2 font-medium">{stay.name}</p>
+          <div className="mt-2">
+            <p className="font-medium">{stay.name}</p>
+            <p className="mt-1 text-sm text-muted">
+              {stayKindLabel(stay.kind)} ·{" "}
+              {stay.kind === "house"
+                ? unitCount > 1
+                  ? `${unitCount} houses · ${stayLayoutLabel(stay)} each`
+                  : stayLayoutLabel(stay)
+                : `${unitCount} ${unitCount === 1 ? "room" : "rooms"} · ${stayLayoutLabel(stay)}`}{" "}
+              · {formatZar(stay.nightlyCents)} per night
+            </p>
+            <p className="mt-1 text-sm font-medium">
+              {formatZar(stayTotalCents(stay.nightlyCents, unitCount, stay.nights))}
+            </p>
+          </div>
         ) : (
           <p className="mt-2 text-sm text-muted">No stay chosen yet.</p>
         )}
@@ -486,7 +599,7 @@ function ChosenPlan({
                 <input key={id} type="hidden" name="activityId" value={id} />
               ))}
               <Button disabled={placePending}>
-                {placePending ? "Saving…" : `Add ${pickedToAdd.length} to plan`}
+                {placePending ? "Saving…" : "Confirm"}
               </Button>
             </form>
           ) : null}
@@ -509,42 +622,94 @@ function ChosenPlan({
           </Button>
         </div>
       ) : null}
+
+      {stay && pickedToAdd.length === 0 ? (
+        <p className="pt-1">
+          <Link
+            href={`/bookings/trip/${tripId}`}
+            className="inline-flex items-center justify-center rounded-full bg-accent px-5 py-2.5 text-sm font-medium text-white hover:bg-accent-hover"
+          >
+            Advance
+          </Link>
+        </p>
+      ) : stay ? (
+        <p className="text-sm text-muted">
+          Confirm the ticked places first, then Advance to Bookings.
+        </p>
+      ) : (
+        <p className="text-sm text-muted">
+          Confirm a stay first, then Advance to Bookings.
+        </p>
+      )}
     </div>
   );
 }
 
 function StayList({
   tripId,
-  destination,
   stays,
+  emptyLabel,
+  priceBand,
+  onPriceBandChange,
   selectedId,
   chosenStayId,
+  travellers,
+  unitCount,
   loading,
   pending,
   message,
   action,
   onSelect,
+  onUnitsChange,
 }: {
   tripId: string;
-  destination: string;
   stays: QuotedStay[];
+  emptyLabel: string;
+  priceBand: PriceBand;
+  onPriceBandChange: (band: PriceBand) => void;
   selectedId: string | null;
   chosenStayId: string | null;
+  travellers: number;
+  unitCount: number;
   loading: boolean;
   pending: boolean;
   message?: string;
   action: (formData: FormData) => void;
   onSelect: (id: string) => void;
+  onUnitsChange: (units: number) => void;
 }) {
   return (
     <div className="overflow-hidden rounded-2xl border border-border bg-card">
-      <div className="flex items-center justify-between border-b border-border px-6 py-4">
+      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border px-6 py-4">
         <h2 className="font-medium">Accommodation</h2>
-        <p className="text-sm text-muted">
-          {loading
-            ? "Updating…"
-            : `${stays.length} within ${MAX_ACTIVITY_DISTANCE_KM} km`}
-        </p>
+        <div className="flex flex-wrap items-center gap-3">
+          {loading ? <p className="text-sm text-muted">Updating…</p> : null}
+          {chosenStayId ? (
+            <form action={action}>
+              <input type="hidden" name="tripId" value={tripId} />
+              <input type="hidden" name="stayId" value={chosenStayId} />
+              <StayUnitsSelect
+                travellers={travellers}
+                value={unitCount}
+                onChange={onUnitsChange}
+                submitOnChange
+              />
+            </form>
+          ) : (
+            <StayUnitsSelect
+              travellers={travellers}
+              value={unitCount}
+              onChange={onUnitsChange}
+            />
+          )}
+        </div>
+      </div>
+      <div className="border-b border-border px-6 py-3">
+        <PriceFilter
+          label="Stay price"
+          value={priceBand}
+          onChange={onPriceBandChange}
+        />
       </div>
       {message ? (
         <p className="border-b border-border px-6 py-3 text-sm text-accent">
@@ -552,10 +717,7 @@ function StayList({
         </p>
       ) : null}
       {stays.length === 0 ? (
-        <p className="px-6 py-5 text-sm text-muted">
-          No listed stays within {MAX_ACTIVITY_DISTANCE_KM} km of {destination}{" "}
-          yet. Move the map if you are exploring nearby towns.
-        </p>
+        <p className="px-6 py-5 text-sm text-muted">{emptyLabel}</p>
       ) : (
         <ul className="divide-y divide-border">
           {stays.map((stay) => {
@@ -584,9 +746,15 @@ function StayList({
                       <OpenBadge status={stay.openStatus} />
                     </div>
                     <p className="mt-1 text-sm text-muted">
-                      {stay.area} · {formatDistance(stay.distanceKm)}
+                      {stayKindLabel(stay.kind)} · {stay.area} ·{" "}
+                      {formatTravelAway(stay.distanceKm)} ·{" "}
+                      {stayLayoutLabel(stay)}
                     </p>
-                    <p className="mt-1 text-sm">{formatZar(stay.totalCents)}</p>
+                    <p className="mt-1 text-sm">
+                      {formatZar(
+                        stayTotalCents(stay.nightlyCents, unitCount, stay.nights),
+                      )}
+                    </p>
                   </button>
                   {chosen || (!closed && current) ? (
                     <form action={action} className="shrink-0">
@@ -601,8 +769,9 @@ function StayList({
                       ) : (
                         <>
                           <input type="hidden" name="stayId" value={stay.id} />
+                          <input type="hidden" name="stayUnits" value={unitCount} />
                           <Button disabled={pending || closed}>
-                            {pending ? "Saving…" : "Choose"}
+                            {pending ? "Saving…" : "Confirm"}
                           </Button>
                         </>
                       )}
@@ -622,6 +791,8 @@ function PlaceList({
   title,
   emptyLabel,
   places,
+  priceBand,
+  onPriceBandChange,
   selectedId,
   pickedIds,
   selectedActivityIds,
@@ -632,6 +803,8 @@ function PlaceList({
   title: string;
   emptyLabel: string;
   places: NearbyActivity[];
+  priceBand: PriceBand;
+  onPriceBandChange: (band: PriceBand) => void;
   selectedId: string | null;
   pickedIds: string[];
   selectedActivityIds: string[];
@@ -641,13 +814,16 @@ function PlaceList({
 }) {
   return (
     <div className="overflow-hidden rounded-2xl border border-border bg-card">
-      <div className="flex items-center justify-between border-b border-border px-6 py-4">
+      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border px-6 py-4">
         <h2 className="font-medium">{title}</h2>
-        <p className="text-sm text-muted">
-          {loading
-            ? "Updating…"
-            : `${places.length} within ${MAX_ACTIVITY_DISTANCE_KM} km`}
-        </p>
+        {loading ? <p className="text-sm text-muted">Updating…</p> : null}
+      </div>
+      <div className="border-b border-border px-6 py-3">
+        <PriceFilter
+          label={`${title} price`}
+          value={priceBand}
+          onChange={onPriceBandChange}
+        />
       </div>
       {places.length === 0 ? (
         <p className="px-6 py-5 text-sm text-muted">{emptyLabel}</p>
@@ -693,7 +869,12 @@ function PlaceList({
                       <OpenBadge status={place.openStatus} />
                     </div>
                     <p className="mt-1 text-sm text-muted">
-                      {place.area} · {formatDistance(place.distanceKm)}
+                      {place.area} · {formatTravelAway(place.distanceKm)}
+                    </p>
+                    <p className="mt-1 text-sm">
+                      {place.estimatedCostCents === 0
+                        ? "Free"
+                        : formatZar(place.estimatedCostCents)}
                     </p>
                   </button>
                 </div>

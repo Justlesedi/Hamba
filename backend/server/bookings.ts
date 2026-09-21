@@ -1,5 +1,5 @@
 import { randomUUID } from "node:crypto";
-import { isTransportMode } from "../lib/booking";
+import { bookingCommissionCents, isTransportMode } from "../lib/booking";
 import {
   activityCostCents,
   activityPricing,
@@ -34,6 +34,7 @@ type BookingRow = {
   transportMode: string;
   transportCents: number;
   placesTotalCents: number;
+  commissionCents: number;
   totalCents: number;
   status: string;
   createdAt: string;
@@ -106,6 +107,7 @@ function mapBooking(row: BookingRow, places: BookingPlace[]): Booking {
       : "none",
     transportCents: Number(row.transportCents),
     placesTotalCents: Number(row.placesTotalCents),
+    commissionCents: Number(row.commissionCents ?? 0),
     totalCents: Number(row.totalCents),
     status: row.status === "cancelled" ? "cancelled" : "confirmed",
     places,
@@ -181,8 +183,9 @@ export function createBooking(
   }
 
   const quotedStay = quoteStay(stay, {
-    travellers: trip.travellers,
     nights: tripNights(trip.startDate, trip.endDate),
+    units: trip.stayUnits,
+    travellers: trip.travellers,
   });
 
   const origin = { lat: stay.latitude, lng: stay.longitude };
@@ -231,7 +234,10 @@ export function createBooking(
     (sum, place) => sum + place.amountCents,
     0,
   );
-  const totalCents = quotedStay.totalCents + placesTotalCents;
+  const commissionCents = bookingCommissionCents(
+    quotedStay.totalCents + placesTotalCents,
+  );
+  const totalCents = quotedStay.totalCents + placesTotalCents + commissionCents;
   const now = new Date().toISOString();
   const id = randomUUID();
 
@@ -243,9 +249,9 @@ export function createBooking(
         travellers, stayId, stayName, stayArea, stayTotalCents,
         outboundFlightId, outboundLabel, outboundCents,
         returnFlightId, returnLabel, returnCents,
-        transportMode, transportCents, placesTotalCents, totalCents,
+        transportMode, transportCents, placesTotalCents, commissionCents, totalCents,
         status, createdAt, updatedAt
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'confirmed', ?, ?)`,
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'confirmed', ?, ?)`,
     ).run(
       id,
       userId,
@@ -268,6 +274,7 @@ export function createBooking(
       "none",
       0,
       placesTotalCents,
+      commissionCents,
       totalCents,
       now,
       now,
@@ -316,4 +323,26 @@ export function cancelBooking(userId: string, bookingId: string) {
   ).run(new Date().toISOString(), bookingId, userId);
 
   return getBookingForUser(userId, bookingId);
+}
+
+export function deleteBooking(userId: string, bookingId: string) {
+  const booking = getBookingForUser(userId, bookingId);
+  if (!booking) {
+    return null;
+  }
+
+  db.exec("BEGIN");
+  try {
+    db.prepare(`DELETE FROM booking_places WHERE bookingId = ?`).run(bookingId);
+    db.prepare(`DELETE FROM bookings WHERE id = ? AND userId = ?`).run(
+      bookingId,
+      userId,
+    );
+    db.exec("COMMIT");
+  } catch (error) {
+    db.exec("ROLLBACK");
+    throw error;
+  }
+
+  return booking;
 }

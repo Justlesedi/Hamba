@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { getTripForUser } from "@backend/server/trips";
 import { formatZarFromCents } from "@backend/lib/money";
 import { Card } from "@/components/ui/card";
+import { DeleteTripButton } from "@/components/trip/delete-trip-button";
 import { verifySession } from "@/lib/dal";
 
 function formatDate(value: Date) {
@@ -53,7 +54,7 @@ export default async function Page({
           <p className="mt-1 font-medium">
             {trip.budgetCents == null ? (
               <Link href={`/trips/${trip.id}/budget`} className="hover:text-accent">
-                Forecast on Budget
+                Set on Budget
               </Link>
             ) : (
               formatZarFromCents(trip.budgetCents)
@@ -62,13 +63,19 @@ export default async function Page({
         </div>
       </Card>
       <p className="text-sm text-muted">
-        Open Plan to choose a stay and the places you want to visit. Budget
-        costs those choices as a forecast.{" "}
+        <Link href={`/trips/${trip.id}/itinerary`} className="font-medium hover:text-accent">
+          Plan
+        </Link>
+        {" · "}
+        <Link href={`/trips/${trip.id}/budget`} className="font-medium hover:text-accent">
+          Budget
+        </Link>
+        {" · "}
         <Link href={`/bookings/trip/${trip.id}`} className="font-medium hover:text-accent">
-          Book a stay and any activities that need a reservation
-        </Link>{" "}
-        from Bookings, separate from Plan.
+          Advance
+        </Link>
       </p>
+      <DeleteTripButton tripId={trip.id} />
     </section>
   );
 }

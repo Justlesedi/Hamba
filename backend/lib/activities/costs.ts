@@ -129,12 +129,9 @@ export function activityPricing(activityId: string, kind: "activity" | "food") {
 export function placePartyCostCents(
   unitCents: number,
   travellers: number,
-  pricing: { priceUnit: "visit" | "hour"; typicalHours: number },
+  _pricing?: { priceUnit: "visit" | "hour"; typicalHours: number },
 ) {
-  if (pricing.priceUnit === "hour") {
-    return Math.round(unitCents * pricing.typicalHours * travellers);
-  }
-  return unitCents * travellers;
+  return unitCents * Math.max(1, travellers);
 }
 
 const PAY_ON_ARRIVAL = new Set([

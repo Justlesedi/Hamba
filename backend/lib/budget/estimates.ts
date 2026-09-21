@@ -76,11 +76,25 @@ export function nightlyStayCents(destination: string) {
 }
 
 export function stayRooms(travellers: number) {
-  return Math.max(1, Math.ceil(travellers / 2));
+  return Math.max(1, travellers);
 }
 
-export function stayUnits(travellers: number, sleeps: number) {
-  return Math.max(1, Math.ceil(travellers / Math.max(1, sleeps)));
+export function clampStayUnits(units: number, travellers: number) {
+  const max = Math.max(1, Math.floor(travellers) || 1);
+  const value = Number.isFinite(units) ? Math.round(units) : 1;
+  return Math.min(max, Math.max(1, value));
+}
+
+export function stayUnits(travellers: number, _sleeps?: number, chosen?: number) {
+  return clampStayUnits(chosen ?? 1, travellers);
+}
+
+export function stayTotalCents(
+  nightlyCents: number,
+  units: number,
+  nights: number,
+) {
+  return nightlyCents * Math.max(1, units) * Math.max(0, nights);
 }
 
 export function tripNights(startDate: Date, endDate: Date) {

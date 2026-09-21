@@ -16,8 +16,7 @@ export function BookingList({ bookings }: { bookings: Booking[] }) {
   if (bookings.length === 0) {
     return (
       <p className="text-sm text-muted">
-        No bookings yet. Open Bookings and reserve a stay, plus any activities
-        that take a reservation.
+        No bookings yet. Confirm a stay on Plan, then Advance.
       </p>
     );
   }

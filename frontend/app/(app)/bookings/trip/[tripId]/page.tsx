@@ -1,11 +1,12 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
+import { listBookableActivities } from "@backend/server/activities";
 import { getConfirmedBookingForTrip } from "@backend/server/bookings";
-import { searchNearbyActivities } from "@backend/server/activities";
 import { listTripPlaceIds } from "@backend/server/plan";
-import { searchNearbyStays } from "@backend/server/stays";
+import { getStayById, quoteStay } from "@backend/server/stays";
 import { getTripForUser } from "@backend/server/trips";
 import { tripNights } from "@backend/lib/budget/estimates";
+import { haversineKm } from "@backend/lib/geo";
 import { resolveDestinationCenter } from "@backend/lib/geocode";
 import { CheckoutForm } from "@/components/booking/checkout-form";
 import { verifySession } from "@/lib/dal";
@@ -30,20 +31,28 @@ export default async function Page({
 
   const center = await resolveDestinationCenter(trip.destination);
   const nights = tripNights(trip.startDate, trip.endDate);
-  const stays = center
-    ? searchNearbyStays(center.lat, center.lng, {
-        travellers: trip.travellers,
+  const plannedStay = trip.stayId ? getStayById(trip.stayId) : null;
+  const from = plannedStay
+    ? { lat: plannedStay.latitude, lng: plannedStay.longitude }
+    : (center ?? undefined);
+  const stay = plannedStay
+    ? quoteStay(plannedStay, {
         nights,
+        units: trip.stayUnits,
+        travellers: trip.travellers,
+        distanceKm: center
+          ? Math.round(
+              haversineKm(
+                center.lat,
+                center.lng,
+                plannedStay.latitude,
+                plannedStay.longitude,
+              ) * 10,
+            ) / 10
+          : 0,
       })
-    : [];
-  const nearby = center
-    ? searchNearbyActivities(center.lat, center.lng)
-    : [];
-  const bookableActivities = nearby.filter(
-    (place) =>
-      place.requiresBooking && place.openStatus.state !== "closed",
-  );
-  const plannedIds = new Set(listTripPlaceIds(trip.id));
+    : null;
+  const activities = listBookableActivities(listTripPlaceIds(trip.id), from);
 
   return (
     <section className="space-y-6">
@@ -54,22 +63,13 @@ export default async function Page({
           </Link>
         </p>
         <h1 className="mt-2 text-2xl font-semibold">Book {trip.title}</h1>
-        <p className="text-sm text-muted">
-          Reserve a stay in {trip.destination}, plus any activities that need a
-          booking. Plan and Budget stay as a forecast and are not changed here.
-        </p>
+        <p className="text-sm text-muted">{trip.destination}</p>
       </div>
       <CheckoutForm
         tripId={trip.id}
-        destination={trip.destination}
         travellers={trip.travellers}
-        stays={stays}
-        activities={bookableActivities}
-        suggestedStayId={trip.stayId}
-        suggestedActivityIds={bookableActivities
-          .filter((place) => plannedIds.has(place.id))
-          .map((place) => place.id)}
-        budgetCents={trip.budgetCents}
+        stay={stay}
+        activities={activities}
       />
     </section>
   );

@@ -1,7 +1,8 @@
 "use client";
 
 import { formatZar } from "@backend/lib/money";
-import type { QuotedStay } from "@backend/types/stay";
+import { formatTravelAway } from "@backend/lib/geo";
+import { stayKindLabel, stayLayoutLabel, type QuotedStay } from "@backend/types/stay";
 import { OpenBadge } from "@/components/plan/open-badge";
 import { Button } from "@/components/ui/button";
 
@@ -39,9 +40,10 @@ export function StayPicker({
                 <OpenBadge status={stay.openStatus} />
               </div>
               <p className="mt-1 text-sm text-muted">
-                {stay.area} · {stay.kind} · {stay.units}{" "}
+                {stayKindLabel(stay.kind)} · {stay.area} ·{" "}
+                {formatTravelAway(stay.distanceKm)} · {stay.units}{" "}
                 {stay.units === 1 ? "unit" : "units"} · {stay.nights}{" "}
-                {stay.nights === 1 ? "night" : "nights"}
+                {stay.nights === 1 ? "night" : "nights"} · {stayLayoutLabel(stay)}
               </p>
               <p className="mt-1 text-sm font-medium">
                 {formatZar(stay.totalCents)}
@@ -52,7 +54,7 @@ export function StayPicker({
               variant={chosen ? "secondary" : "primary"}
               onClick={() => onSelect(chosen ? null : stay.id)}
             >
-              {chosen ? "Clear" : "Select"}
+              {chosen ? "Clear" : "Confirm"}
             </Button>
           </li>
         );

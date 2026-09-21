@@ -8,8 +8,18 @@ const TRANSPORT_MODES = new Set<TransportMode>([
   "none",
 ]);
 
+export const BOOKING_COMMISSION_RATE = 0.03;
+
 export function isTransportMode(value: string): value is TransportMode {
   return TRANSPORT_MODES.has(value as TransportMode);
+}
+
+export function bookingCommissionCents(subtotalCents: number) {
+  return Math.round(Math.max(0, subtotalCents) * BOOKING_COMMISSION_RATE);
+}
+
+export function bookingCommissionLabel() {
+  return `Commission (${Math.round(BOOKING_COMMISSION_RATE * 100)}%)`;
 }
 
 export function transportCentsForMode(

@@ -1,6 +1,7 @@
 import { db } from "../lib/db";
 import {
   haversineKm,
+  isWithinAnHour,
   MAX_ACTIVITY_DISTANCE_KM,
 } from "../lib/geo";
 import {
@@ -73,7 +74,10 @@ export function searchNearbyActivities(
         10;
       return withPlanFields(activity, distanceKm);
     })
-    .filter((activity) => activity.distanceKm <= cap)
+    .filter(
+      (activity) =>
+        activity.distanceKm <= cap && isWithinAnHour(activity.distanceKm),
+    )
     .sort((a, b) => a.distanceKm - b.distanceKm);
 }
 
@@ -102,4 +106,18 @@ export function getNearbyActivityById(
       ) / 10
     : 0;
   return withPlanFields(activity, distanceKm);
+}
+
+export function listBookableActivities(
+  activityIds: string[],
+  from?: { lat: number; lng: number },
+) {
+  return activityIds
+    .map((id) => getNearbyActivityById(id, from))
+    .filter(
+      (place): place is NearbyActivity =>
+        place != null &&
+        place.requiresBooking &&
+        place.openStatus.state !== "closed",
+    );
 }

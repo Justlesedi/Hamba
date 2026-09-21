@@ -48,8 +48,9 @@ export async function GET(
   }
 
   const stays = searchNearbyStays(center.lat, center.lng, {
-    travellers: trip.travellers,
     nights: tripNights(trip.startDate, trip.endDate),
+    units: trip.stayUnits,
+    travellers: trip.travellers,
   });
 
   return NextResponse.json({

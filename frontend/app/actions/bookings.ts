@@ -6,13 +6,16 @@ import {
   BookingError,
   cancelBooking,
   createBooking,
+  deleteBooking,
   getBookingForUser,
 } from "@backend/server/bookings";
 import {
   cancelBookingSchema,
   createBookingSchema,
+  deleteBookingSchema,
   type CancelBookingFormState,
   type CreateBookingFormState,
+  type DeleteBookingFormState,
 } from "@backend/lib/validation";
 import { verifySession } from "@/lib/dal";
 
@@ -94,4 +97,35 @@ export async function cancelBookingAction(
   }
 
   redirect(`/bookings/${existing.id}`);
+}
+
+export async function deleteBookingAction(
+  _state: DeleteBookingFormState,
+  formData: FormData,
+): Promise<DeleteBookingFormState> {
+  const { userId } = await verifySession();
+  const parsed = deleteBookingSchema.safeParse({
+    bookingId: formData.get("bookingId"),
+  });
+
+  if (!parsed.success) {
+    return { message: "Booking is missing." };
+  }
+
+  const existing = getBookingForUser(userId, parsed.data.bookingId);
+  if (!existing) {
+    return { message: "Booking not found." };
+  }
+
+  try {
+    const booking = deleteBooking(userId, parsed.data.bookingId);
+    if (!booking) {
+      return { message: "Booking not found." };
+    }
+    revalidateBooking(booking.tripId);
+  } catch {
+    return { message: "Could not delete this booking. Please try again." };
+  }
+
+  redirect("/bookings");
 }

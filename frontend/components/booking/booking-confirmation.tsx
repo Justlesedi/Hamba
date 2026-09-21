@@ -3,9 +3,10 @@
 import { useActionState } from "react";
 import Link from "next/link";
 import { cancelBookingAction } from "@/app/actions/bookings";
-import { bookingStatusLabel } from "@backend/lib/booking";
+import { bookingCommissionLabel, bookingStatusLabel } from "@backend/lib/booking";
 import { formatZar } from "@backend/lib/money";
 import type { Booking } from "@backend/types/booking";
+import { DeleteBookingButton } from "@/components/booking/delete-booking-button";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 
@@ -31,7 +32,6 @@ export function BookingConfirmation({
   const activities = booking.places.filter((place) => place.kind !== "food");
   const cancelled = booking.status === "cancelled";
   const showFlights = Boolean(booking.outbound || booking.inbound);
-  const showTransport = booking.transportMode !== "none" || booking.transportCents > 0;
 
   return (
     <div className="space-y-6">
@@ -47,13 +47,29 @@ export function BookingConfirmation({
         <p className="mt-4 text-2xl font-semibold">
           {formatZar(booking.totalCents)}
         </p>
+        {booking.commissionCents > 0 ? (
+          <div className="mt-3 space-y-2 text-sm">
+            <div className="flex justify-between gap-4">
+              <span className="text-muted">Stay</span>
+              <span>{formatZar(booking.stayTotalCents)}</span>
+            </div>
+            <div className="flex justify-between gap-4">
+              <span className="text-muted">Activities</span>
+              <span>{formatZar(booking.placesTotalCents)}</span>
+            </div>
+            <div className="flex justify-between gap-4">
+              <span className="text-muted">{bookingCommissionLabel()}</span>
+              <span>{formatZar(booking.commissionCents)}</span>
+            </div>
+          </div>
+        ) : null}
         <p className="mt-2 text-sm text-muted">
           Recorded on Hamba. Paying the stay and activity operators comes later.
         </p>
       </Card>
 
       <Card>
-        <h2 className="font-medium">Stay</h2>
+        <h2 className="font-medium">Accommodation</h2>
         <p className="mt-1 text-lg font-semibold">{booking.stayName}</p>
         <p className="mt-1 text-sm text-muted">{booking.stayArea}</p>
         <p className="mt-3 text-sm font-medium">
@@ -113,18 +129,6 @@ export function BookingConfirmation({
         </Card>
       ) : null}
 
-      {showTransport ? (
-        <Card>
-          <h2 className="font-medium">Transport</h2>
-          <p className="mt-2 text-sm text-muted">
-            Older bookings could include local transport. New bookings do not.
-          </p>
-          <p className="mt-3 text-sm font-medium">
-            {formatZar(booking.transportCents)}
-          </p>
-        </Card>
-      ) : null}
-
       {cancelled ? (
         <p className="text-sm text-muted">
           This booking was cancelled. You can book a stay and activities again
@@ -153,6 +157,8 @@ export function BookingConfirmation({
           </Button>
         </form>
       )}
+
+      <DeleteBookingButton bookingId={booking.id} />
     </div>
   );
 }

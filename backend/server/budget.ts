@@ -31,8 +31,9 @@ export function forecastTripBudget(
   const chosenStay = trip.stayId ? getStayById(trip.stayId) : null;
   const stay = chosenStay
     ? quoteStay(chosenStay, {
-        travellers: trip.travellers,
         nights,
+        units: trip.stayUnits,
+        travellers: trip.travellers,
       })
     : null;
 

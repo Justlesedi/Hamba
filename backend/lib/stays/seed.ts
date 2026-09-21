@@ -1,36 +1,10 @@
 import type { DatabaseSync } from "node:sqlite";
-import { zarToCents } from "../money";
-import type { Stay, StayKind } from "../../types/stay";
-
-function stay(
-  id: string,
-  name: string,
-  latitude: number,
-  longitude: number,
-  company: string,
-  area: string,
-  kind: StayKind,
-  sleeps: number,
-  nightlyZar: number,
-  note: string,
-): Stay {
-  return {
-    id,
-    name,
-    latitude,
-    longitude,
-    company,
-    area,
-    kind,
-    sleeps,
-    nightlyCents: zarToCents(nightlyZar),
-    note,
-    operatingHours: "Open 24 hours",
-  };
-}
+import type { Stay } from "../../types/stay";
+import { stay } from "./factory";
+import { EXTRA_STAYS } from "./seed-extra";
 
 /** Recognisable hotels, guesthouses, lodges, and camps with the area they sit in. */
-export const STAYS: Stay[] = [
+const CORE_STAYS: Stay[] = [
   // Cape Town
   stay("stay_ct_silo", "The Silo Hotel", -33.9078, 18.4236, "The Royal Portfolio", "V&A Waterfront, Cape Town", "hotel", 2, 8500, "Suites above the Zeitz Museum, harbour views."),
   stay("stay_ct_oneandonly", "One&Only Cape Town", -33.9062, 18.4212, "Kerzner International", "V&A Waterfront, Cape Town", "hotel", 2, 7200, "Island resort on the marina."),
@@ -129,11 +103,13 @@ export const STAYS: Stay[] = [
   stay("stay_springbok_naries", "Naries Namakwa Retreat", -29.6824, 17.8216, "Naries Namakwa Retreat", "Springbok", "lodge", 2, 2400, "Desert retreat west of Springbok."),
 ];
 
+export const STAYS: Stay[] = [...CORE_STAYS, ...EXTRA_STAYS];
+
 export function seedStays(database: DatabaseSync) {
   const insert = database.prepare(
     `INSERT OR IGNORE INTO stays (
-      id, name, latitude, longitude, company, area, kind, sleeps, nightlyCents, note, operatingHours
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      id, name, latitude, longitude, company, area, kind, sleeps, beds, rooms, nightlyCents, note, operatingHours
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
   );
   const update = database.prepare(
     `UPDATE stays SET
@@ -144,6 +120,8 @@ export function seedStays(database: DatabaseSync) {
       area = ?,
       kind = ?,
       sleeps = ?,
+      beds = ?,
+      rooms = ?,
       nightlyCents = ?,
       note = ?,
       operatingHours = ?
@@ -160,6 +138,8 @@ export function seedStays(database: DatabaseSync) {
       listed.area,
       listed.kind,
       listed.sleeps,
+      listed.beds,
+      listed.rooms,
       listed.nightlyCents,
       listed.note,
       listed.operatingHours,
@@ -172,6 +152,8 @@ export function seedStays(database: DatabaseSync) {
       listed.area,
       listed.kind,
       listed.sleeps,
+      listed.beds,
+      listed.rooms,
       listed.nightlyCents,
       listed.note,
       listed.operatingHours,

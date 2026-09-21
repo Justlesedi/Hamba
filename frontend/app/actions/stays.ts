@@ -31,6 +31,7 @@ export async function chooseStayAction(
   const parsed = chooseStaySchema.safeParse({
     tripId: formData.get("tripId"),
     stayId: formData.get("stayId"),
+    stayUnits: formData.get("stayUnits"),
   });
 
   if (!parsed.success) {
@@ -40,12 +41,20 @@ export async function chooseStayAction(
   const stayId = parsed.data.stayId.length > 0 ? parsed.data.stayId : null;
 
   try {
-    const trip = await chooseStayForTrip(userId, parsed.data.tripId, stayId);
+    const trip = await chooseStayForTrip(
+      userId,
+      parsed.data.tripId,
+      stayId,
+      parsed.data.stayUnits,
+    );
     if (!trip) {
       return { message: "Could not save this stay." };
     }
     revalidateTrip(trip.id);
-    return { selectedStayId: trip.stayId };
+    return {
+      selectedStayId: trip.stayId,
+      selectedStayUnits: trip.stayUnits,
+    };
   } catch {
     return { message: "Could not save this stay. Please try again." };
   }

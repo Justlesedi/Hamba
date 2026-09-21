@@ -25,9 +25,11 @@ export async function GET(request: Request) {
 
   const travellers = Number(url.searchParams.get("travellers") ?? 2);
   const nights = Number(url.searchParams.get("nights") ?? 1);
+  const units = Number(url.searchParams.get("units") ?? 1);
   const stays = searchNearbyStays(parsed.data.lat, parsed.data.lng, {
     travellers: Number.isFinite(travellers) && travellers > 0 ? travellers : 2,
     nights: Number.isFinite(nights) && nights >= 0 ? nights : 1,
+    units: Number.isFinite(units) && units > 0 ? units : 1,
   });
 
   return NextResponse.json({

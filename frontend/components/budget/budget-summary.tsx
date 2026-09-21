@@ -131,10 +131,10 @@ function ForecastResults({
             </p>
             <p className="mt-2 text-sm text-muted">
               {forecast.stay.area} · {forecast.stay.rooms}{" "}
-              {forecast.stay.rooms === 1 ? "unit" : "units"} ·{" "}
+              {forecast.stay.rooms === 1 ? "room" : "rooms"} ·{" "}
               {forecast.stay.nights}{" "}
               {forecast.stay.nights === 1 ? "night" : "nights"} ·{" "}
-              {formatZar(forecast.stay.nightlyCents)} per unit per night
+              {formatZar(forecast.stay.nightlyCents)} per room per night
             </p>
             <p className="mt-3 text-sm">
               <Link href={planHref} className="font-medium hover:text-accent">
@@ -205,8 +205,8 @@ function ForecastResults({
         <h2 className="font-medium">Chosen places</h2>
         <p className="mt-1 text-sm text-muted">
           Costs for {forecast.travellers}{" "}
-          {forecast.travellers === 1 ? "traveller" : "travellers"}, using each
-          company’s visit or hourly rate.
+          {forecast.travellers === 1 ? "traveller" : "travellers"}, at each
+          company’s per-person rate.
         </p>
         {forecast.activities.length === 0 ? (
           <p className="mt-4 text-sm text-muted">
@@ -277,15 +277,15 @@ function ForecastResults({
       <Card>
         <h2 className="font-medium">Ready to book?</h2>
         <p className="mt-2 text-sm text-muted">
-          Booking is separate from this forecast. Reserve a stay and any
-          activities that need a booking. Transport is not booked on Hamba.
+          Booking uses the stay and activities from Plan. Advance when those
+          choices are ready.
         </p>
         <p className="mt-4">
           <Link
             href={`/bookings/trip/${tripId}`}
-            className="font-medium hover:text-accent"
+            className="inline-flex items-center justify-center rounded-full bg-accent px-5 py-2.5 text-sm font-medium text-white hover:bg-accent-hover"
           >
-            Go to Bookings
+            Advance
           </Link>
         </p>
       </Card>
@@ -321,9 +321,7 @@ function PlaceGroup({
               <p className="mt-1 text-sm text-muted">
                 {place.estimatedCostCents === 0
                   ? "Free visit"
-                  : place.priceUnit === "hour"
-                    ? `${formatZar(place.estimatedCostCents)} per hour · ${place.typicalHours} h`
-                    : `${formatZar(place.estimatedCostCents)} per visit`}
+                  : `${formatZar(place.estimatedCostCents)} per person`}
               </p>
             </div>
             <p className="text-sm font-medium">

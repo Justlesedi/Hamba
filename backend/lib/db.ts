@@ -37,6 +37,7 @@ db.exec(`
     budgetCents INTEGER,
     travellers INTEGER NOT NULL DEFAULT 1,
     stayId TEXT,
+    stayUnits INTEGER NOT NULL DEFAULT 1,
     outboundFlightId TEXT,
     returnFlightId TEXT,
     createdAt TEXT NOT NULL,
@@ -67,6 +68,8 @@ db.exec(`
     area TEXT NOT NULL,
     kind TEXT NOT NULL,
     sleeps INTEGER NOT NULL,
+    beds INTEGER NOT NULL DEFAULT 2,
+    rooms INTEGER NOT NULL DEFAULT 1,
     nightlyCents INTEGER NOT NULL,
     note TEXT NOT NULL,
     operatingHours TEXT NOT NULL DEFAULT 'Open 24 hours'
@@ -102,6 +105,7 @@ db.exec(`
     transportMode TEXT NOT NULL,
     transportCents INTEGER NOT NULL,
     placesTotalCents INTEGER NOT NULL,
+    commissionCents INTEGER NOT NULL DEFAULT 0,
     totalCents INTEGER NOT NULL,
     status TEXT NOT NULL,
     createdAt TEXT NOT NULL,
@@ -164,6 +168,11 @@ db.exec(`
   if (!columns.some((column) => column.name === "returnFlightId")) {
     db.exec(`ALTER TABLE trips ADD COLUMN returnFlightId TEXT`);
   }
+  if (!columns.some((column) => column.name === "stayUnits")) {
+    db.exec(
+      `ALTER TABLE trips ADD COLUMN stayUnits INTEGER NOT NULL DEFAULT 1`,
+    );
+  }
 }
 
 {
@@ -174,6 +183,12 @@ db.exec(`
     db.exec(
       `ALTER TABLE stays ADD COLUMN operatingHours TEXT NOT NULL DEFAULT 'Open 24 hours'`,
     );
+  }
+  if (!columns.some((column) => column.name === "beds")) {
+    db.exec(`ALTER TABLE stays ADD COLUMN beds INTEGER NOT NULL DEFAULT 2`);
+  }
+  if (!columns.some((column) => column.name === "rooms")) {
+    db.exec(`ALTER TABLE stays ADD COLUMN rooms INTEGER NOT NULL DEFAULT 1`);
   }
 }
 
@@ -209,6 +224,11 @@ seedStays(db);
     if (!columns.some((column) => column.name === "returnCents")) {
       db.exec(
         `ALTER TABLE bookings ADD COLUMN returnCents INTEGER NOT NULL DEFAULT 0`,
+      );
+    }
+    if (!columns.some((column) => column.name === "commissionCents")) {
+      db.exec(
+        `ALTER TABLE bookings ADD COLUMN commissionCents INTEGER NOT NULL DEFAULT 0`,
       );
     }
   }

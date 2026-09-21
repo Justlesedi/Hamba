@@ -2,8 +2,40 @@ import { SOUTH_AFRICA_PLACES } from "./places/south-africa";
 
 export type MapCenter = { lat: number; lng: number };
 
-export const MAX_ACTIVITY_DISTANCE_KM = 30;
+export const MAX_TRAVEL_MINUTES = 60;
+export const AVERAGE_DRIVE_KMH = 60;
+export const MAX_ACTIVITY_DISTANCE_KM = AVERAGE_DRIVE_KMH;
 export const MAX_STAY_DISTANCE_KM = MAX_ACTIVITY_DISTANCE_KM;
+
+export function travelMinutesFromKm(distanceKm: number) {
+  if (distanceKm <= 0) {
+    return 0;
+  }
+
+  return Math.max(1, Math.round((distanceKm / AVERAGE_DRIVE_KMH) * 60));
+}
+
+export function isWithinAnHour(distanceKm: number) {
+  return travelMinutesFromKm(distanceKm) <= MAX_TRAVEL_MINUTES;
+}
+
+export function formatTravelAway(distanceKm: number) {
+  const minutes = travelMinutesFromKm(distanceKm);
+  const distance =
+    distanceKm < 1
+      ? `${Math.round(distanceKm * 1000)} m`
+      : `${distanceKm.toFixed(1)} km`;
+
+  if (minutes <= 0) {
+    return distance;
+  }
+
+  if (minutes < 60) {
+    return `${distance} · ${minutes} min`;
+  }
+
+  return `${distance} · 1 h`;
+}
 
 export function normalizePlace(value: string) {
   return value

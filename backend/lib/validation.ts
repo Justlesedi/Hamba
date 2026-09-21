@@ -96,6 +96,18 @@ export type CreateTripFormState =
 export const chooseStaySchema = z.object({
   tripId: z.string().trim().min(1, "Trip is missing."),
   stayId: z.string().trim(),
+  stayUnits: z.preprocess((value) => {
+    if (value == null || String(value).trim() === "") {
+      return undefined;
+    }
+    return String(value).replace(/\D/g, "");
+  }, z.union([
+    z.undefined(),
+    z
+      .string()
+      .regex(/^[1-9]\d*$/, "Rooms must be a whole number.")
+      .transform(Number),
+  ])),
 });
 
 export type BudgetForecastFormState =
@@ -112,6 +124,7 @@ export type ChooseStayFormState =
   | {
       message?: string;
       selectedStayId?: string | null;
+      selectedStayUnits?: number;
     }
   | undefined;
 
@@ -159,6 +172,12 @@ export const cancelBookingSchema = z.object({
   bookingId: z.string().trim().min(1, "Booking is missing."),
 });
 
+export const deleteBookingSchema = cancelBookingSchema;
+
+export const deleteTripSchema = z.object({
+  tripId: z.string().trim().min(1, "Trip is missing."),
+});
+
 export type CreateBookingFormState =
   | {
       errors?: {
@@ -174,3 +193,6 @@ export type CancelBookingFormState =
       message?: string;
     }
   | undefined;
+
+export type DeleteBookingFormState = CancelBookingFormState;
+export type DeleteTripFormState = CancelBookingFormState;

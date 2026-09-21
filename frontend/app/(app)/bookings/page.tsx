@@ -17,8 +17,7 @@ export default async function Page() {
       <div>
         <h1 className="text-2xl font-semibold">Bookings</h1>
         <p className="text-sm text-muted">
-          Reserve stays and activities that need a booking. Plan stays as a
-          forecast and is not changed here.
+          Review the stay and activities from Plan, then Advance.
         </p>
       </div>
 

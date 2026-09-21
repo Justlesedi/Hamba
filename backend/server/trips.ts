@@ -14,6 +14,7 @@ type TripRow = {
   budgetCents: number | null;
   travellers: number;
   stayId: string | null;
+  stayUnits: number;
   outboundFlightId: string | null;
   returnFlightId: string | null;
   createdAt: string;
@@ -32,6 +33,7 @@ function mapTrip(row: TripRow): Trip {
     budgetCents: row.budgetCents,
     travellers: row.travellers,
     stayId: row.stayId ?? null,
+    stayUnits: Math.max(1, Number(row.stayUnits) || 1),
     outboundFlightId: row.outboundFlightId ?? null,
     returnFlightId: row.returnFlightId ?? null,
     createdAt: new Date(row.createdAt),
@@ -92,4 +94,42 @@ export function updateTripBudget(userId: string, tripId: string, budgetZar: numb
   ).run(zarToCents(budgetZar), new Date().toISOString(), tripId, userId);
 
   return getTripForUser(userId, tripId);
+}
+
+export function deleteTrip(userId: string, tripId: string) {
+  const trip = getTripForUser(userId, tripId);
+  if (!trip) {
+    return null;
+  }
+
+  const bookingIds = (
+    db
+      .prepare(`SELECT id FROM bookings WHERE tripId = ? AND userId = ?`)
+      .all(tripId, userId) as { id: string }[]
+  ).map((row) => row.id);
+
+  db.exec("BEGIN");
+  try {
+    const deletePlaces = db.prepare(
+      `DELETE FROM booking_places WHERE bookingId = ?`,
+    );
+    for (const bookingId of bookingIds) {
+      deletePlaces.run(bookingId);
+    }
+    db.prepare(`DELETE FROM bookings WHERE tripId = ? AND userId = ?`).run(
+      tripId,
+      userId,
+    );
+    db.prepare(`DELETE FROM trip_places WHERE tripId = ?`).run(tripId);
+    db.prepare(`DELETE FROM trips WHERE id = ? AND userId = ?`).run(
+      tripId,
+      userId,
+    );
+    db.exec("COMMIT");
+  } catch (error) {
+    db.exec("ROLLBACK");
+    throw error;
+  }
+
+  return trip;
 }

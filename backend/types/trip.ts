@@ -9,6 +9,7 @@ export type Trip = {
   budgetCents: number | null;
   travellers: number;
   stayId: string | null;
+  stayUnits: number;
   outboundFlightId: string | null;
   returnFlightId: string | null;
   createdAt: Date;

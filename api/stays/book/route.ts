@@ -19,7 +19,12 @@ export async function POST(request: Request) {
   }
 
   const stayId = parsed.data.stayId.length > 0 ? parsed.data.stayId : null;
-  const trip = chooseStayForTrip(session.userId, parsed.data.tripId, stayId);
+  const trip = chooseStayForTrip(
+    session.userId,
+    parsed.data.tripId,
+    stayId,
+    parsed.data.stayUnits,
+  );
   if (!trip) {
     return NextResponse.json({ message: "Could not save this stay." }, { status: 400 });
   }

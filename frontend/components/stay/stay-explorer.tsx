@@ -3,9 +3,11 @@
 import dynamic from "next/dynamic";
 import { useActionState, useEffect, useMemo, useState } from "react";
 import { chooseStayAction } from "@/app/actions/stays";
-import { MAX_STAY_DISTANCE_KM } from "@backend/lib/geo";
+import { formatTravelAway } from "@backend/lib/geo";
 import { formatZar } from "@backend/lib/money";
-import type { QuotedStay, StayKind } from "@backend/types/stay";
+import { filterByPriceBand, type PriceBand } from "@backend/lib/price-band";
+import { stayKindLabel, stayLayoutLabel, type QuotedStay } from "@backend/types/stay";
+import { PriceFilter } from "@/components/plan/price-filter";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 
@@ -19,22 +21,6 @@ const StayMap = dynamic(() => import("@/components/stay/stay-map"), {
 });
 
 type MapCenter = { lat: number; lng: number };
-
-const KIND_LABEL: Record<StayKind, string> = {
-  hotel: "Hotel",
-  guesthouse: "Guesthouse",
-  lodge: "Lodge",
-  camp: "Rest camp",
-  apartment: "Apartment",
-};
-
-function formatDistance(km: number) {
-  if (km < 1) {
-    return `${Math.round(km * 1000)} m away`;
-  }
-
-  return `${km.toFixed(1)} km away`;
-}
 
 export function StayExplorer({
   tripId,
@@ -63,6 +49,7 @@ export function StayExplorer({
   const [locateRequest, setLocateRequest] = useState(0);
   const [locationMessage, setLocationMessage] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [stayBand, setStayBand] = useState<PriceBand>("all");
   const [state, action, pending] = useActionState(chooseStayAction, {
     selectedStayId: initialSelectedStayId,
   });
@@ -71,6 +58,16 @@ export function StayExplorer({
   const selected = useMemo(
     () => stays.find((stay) => stay.id === selectedId) ?? null,
     [stays, selectedId],
+  );
+  const visibleStays = useMemo(
+    () =>
+      filterByPriceBand(
+        stays,
+        stayBand,
+        (stay) => stay.nightlyCents,
+        (stay) => stay.id === selectedId || stay.id === chosenStayId,
+      ),
+    [chosenStayId, selectedId, stayBand, stays],
   );
 
   useEffect(() => {
@@ -130,9 +127,8 @@ export function StayExplorer({
     <div className="space-y-4">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <p className="max-w-xl text-sm text-muted">
-          Stays within {MAX_STAY_DISTANCE_KM} km of the map centre, priced for{" "}
-          {travellers} {travellers === 1 ? "traveller" : "travellers"} and{" "}
-          {nights} {nights === 1 ? "night" : "nights"}. Blue pins are listings.
+          Priced for {travellers} {travellers === 1 ? "traveller" : "travellers"}{" "}
+          and {nights} {nights === 1 ? "night" : "nights"}. Blue pins are stays.
         </p>
         <Button type="button" variant="secondary" onClick={useMyLocation}>
           Use my location
@@ -145,7 +141,7 @@ export function StayExplorer({
       <StayMap
         key={tripId}
         center={center}
-        stays={stays}
+        stays={visibleStays}
         selectedId={selectedId}
         locateRequest={locateRequest}
         onSelect={setSelectedId}
@@ -155,21 +151,25 @@ export function StayExplorer({
       <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_20rem]">
         <div className="overflow-hidden rounded-2xl border border-border bg-card">
           <div className="flex items-center justify-between border-b border-border px-6 py-4">
-            <h2 className="font-medium">Nearby stays</h2>
-            <p className="text-sm text-muted">
-              {loading
-                ? "Updating…"
-                : `${stays.length} within ${MAX_STAY_DISTANCE_KM} km`}
-            </p>
+            <h2 className="font-medium">Accommodation</h2>
+            {loading ? <p className="text-sm text-muted">Updating…</p> : null}
           </div>
-          {stays.length === 0 ? (
+          <div className="border-b border-border px-6 py-3">
+            <PriceFilter
+              label="Stay price"
+              value={stayBand}
+              onChange={setStayBand}
+            />
+          </div>
+          {visibleStays.length === 0 ? (
             <p className="px-6 py-5 text-sm text-muted">
-              No listed stays within {MAX_STAY_DISTANCE_KM} km of {destination}{" "}
-              yet. Move the map if you are exploring nearby towns.
+              {stays.length === 0
+                ? "No stays nearby."
+                : "No stays in this price range."}
             </p>
           ) : (
             <ul className="divide-y divide-border">
-              {stays.map((stay) => {
+              {visibleStays.map((stay) => {
                 const current = stay.id === selectedId;
                 const chosen = stay.id === chosenStayId;
                 const fits =
@@ -188,7 +188,9 @@ export function StayExplorer({
                         {chosen ? " · chosen" : ""}
                       </p>
                       <p className="mt-1 text-sm text-muted">
-                        {stay.area} · {formatDistance(stay.distanceKm)}
+                        {stayKindLabel(stay.kind)} · {stay.area} ·{" "}
+                        {formatTravelAway(stay.distanceKm)} ·{" "}
+                        {stayLayoutLabel(stay)}
                       </p>
                       <p className="mt-1 text-sm">
                         {formatZar(stay.totalCents)}
@@ -211,7 +213,7 @@ export function StayExplorer({
             <div className="space-y-4">
               <div>
                 <p className="text-sm text-muted">
-                  {KIND_LABEL[selected.kind]}
+                  {stayKindLabel(selected.kind)}
                 </p>
                 <h2 className="mt-1 text-lg font-semibold">{selected.name}</h2>
               </div>
@@ -236,8 +238,8 @@ export function StayExplorer({
               </div>
               <p className="text-sm text-muted">{selected.note}</p>
               <p className="text-sm text-muted">
-                Sleeps {selected.sleeps} per unit ·{" "}
-                {formatDistance(selected.distanceKm)}
+                {stayLayoutLabel(selected)} ·{" "}
+                {formatTravelAway(selected.distanceKm)}
               </p>
               {state?.message ? (
                 <p className="text-sm text-accent">{state.message}</p>
@@ -255,7 +257,7 @@ export function StayExplorer({
                   <>
                     <input type="hidden" name="stayId" value={selected.id} />
                     <Button disabled={pending}>
-                      {pending ? "Saving…" : "Choose this stay"}
+                      {pending ? "Saving…" : "Confirm"}
                     </Button>
                   </>
                 )}

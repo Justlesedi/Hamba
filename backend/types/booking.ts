@@ -40,6 +40,7 @@ export type Booking = {
   transportMode: TransportMode;
   transportCents: number;
   placesTotalCents: number;
+  commissionCents: number;
   totalCents: number;
   status: BookingStatus;
   places: BookingPlace[];
