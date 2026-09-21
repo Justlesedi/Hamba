@@ -7,6 +7,7 @@ export function OpenBadge({ status }: { status: OpenStatus }) {
 
   return (
     <span
+      suppressHydrationWarning
       className={
         status.state === "open" ? "hamba-hours hamba-open" : "hamba-hours hamba-closed"
       }

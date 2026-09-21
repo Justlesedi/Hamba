@@ -42,7 +42,7 @@ export function stayLayoutLabel(stay: {
   if (stay.kind === "house") {
     return stay.rooms === 1 ? "1 room" : `${stay.rooms} rooms`;
   }
-  return stay.beds === 1 ? "1 bed" : `${stay.beds} beds`;
+  return stay.beds === 1 ? "1 bed per room" : `${stay.beds} beds per room`;
 }
 
 export type Stay = {

@@ -10,6 +10,7 @@ type MapCenter = { lat: number; lng: number };
 
 type StayMapProps = {
   center: MapCenter;
+  userLocation?: MapCenter | null;
   stays: QuotedStay[];
   selectedId: string | null;
   locateRequest: number;
@@ -33,6 +34,7 @@ function pinIcon(selected: boolean) {
 
 export default function StayMap({
   center,
+  userLocation = null,
   stays,
   selectedId,
   locateRequest,
@@ -43,6 +45,7 @@ export default function StayMap({
   const mapRef = useRef<L.Map | null>(null);
   const markersRef = useRef<L.LayerGroup | null>(null);
   const circleRef = useRef<L.Circle | null>(null);
+  const youRef = useRef<L.Marker | null>(null);
   const onSelectRef = useRef(onSelect);
   const onCenterChangeRef = useRef(onCenterChange);
   const skipMovesRef = useRef(0);
@@ -93,6 +96,7 @@ export default function StayMap({
       mapRef.current = null;
       markersRef.current = null;
       circleRef.current = null;
+      youRef.current = null;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -100,6 +104,36 @@ export default function StayMap({
   useEffect(() => {
     circleRef.current?.setLatLng([center.lat, center.lng]);
   }, [center.lat, center.lng]);
+
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map) {
+      return;
+    }
+
+    if (!userLocation) {
+      youRef.current?.remove();
+      youRef.current = null;
+      return;
+    }
+
+    if (!youRef.current) {
+      youRef.current = L.marker([userLocation.lat, userLocation.lng], {
+        icon: L.divIcon({
+          className: "hamba-pin-you",
+          html: "<span></span>",
+          iconSize: [18, 18],
+          iconAnchor: [9, 9],
+        }),
+        title: "You",
+        interactive: false,
+        zIndexOffset: 600,
+      }).addTo(map);
+      return;
+    }
+
+    youRef.current.setLatLng([userLocation.lat, userLocation.lng]);
+  }, [userLocation]);
 
   useEffect(() => {
     const map = mapRef.current;

@@ -80,6 +80,14 @@ export function coordinatesForDestination(destination: string): MapCenter | null
   return match ? { lat: match.lat, lng: match.lng } : null;
 }
 
+export function movedAtLeastKm(
+  from: MapCenter,
+  to: MapCenter,
+  kilometres: number,
+) {
+  return haversineKm(from.lat, from.lng, to.lat, to.lng) >= kilometres;
+}
+
 export function haversineKm(
   lat1: number,
   lng1: number,

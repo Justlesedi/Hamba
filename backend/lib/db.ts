@@ -15,6 +15,9 @@ const dataDir = path.join(repoRoot(), "backend/data");
 fs.mkdirSync(dataDir, { recursive: true });
 
 export const db = new DatabaseSync(path.join(dataDir, "hamba.db"));
+db.exec("PRAGMA journal_mode = WAL");
+db.exec("PRAGMA busy_timeout = 5000");
+db.exec("PRAGMA synchronous = NORMAL");
 
 db.exec(`
   CREATE TABLE IF NOT EXISTS users (
@@ -136,6 +139,12 @@ db.exec(`
     query TEXT PRIMARY KEY,
     lat REAL NOT NULL,
     lng REAL NOT NULL
+  );
+
+  CREATE TABLE IF NOT EXISTS json_cache (
+    cacheKey TEXT PRIMARY KEY,
+    body TEXT NOT NULL,
+    fetchedAt TEXT NOT NULL
   );
 `);
 

@@ -12,6 +12,9 @@
   --stay: #3d5a80;
   --open: #15803d;
   --closed: #b91c1c;
+  --busy-empty: #15803d;
+  --busy-moderate: #ca8a04;
+  --busy-full: #b91c1c;
 }
 
 @theme inline {
@@ -68,6 +71,22 @@ body {
 
 .hamba-pin-closed span {
   opacity: 0.45;
+}
+
+.hamba-pin-you {
+  background: transparent;
+  border: none;
+}
+
+.hamba-pin-you span {
+  display: block;
+  width: 14px;
+  height: 14px;
+  margin: 2px auto 0;
+  border-radius: 999px;
+  background: #2563eb;
+  border: 2px solid var(--card);
+  box-shadow: 0 0 0 6px rgb(37 99 235 / 0.28);
 }
 
 .hamba-hours {

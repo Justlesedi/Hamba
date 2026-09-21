@@ -2,14 +2,24 @@
 
 import dynamic from "next/dynamic";
 import Link from "next/link";
-import { useActionState, useEffect, useMemo, useState } from "react";
+import { useActionState, useEffect, useMemo, useRef, useState } from "react";
 import { chooseStayAction, updatePlacesAction } from "@/app/actions/stays";
 import { stayTotalCents } from "@backend/lib/budget/estimates";
-import { formatTravelAway } from "@backend/lib/geo";
+import { formatTravelAway, movedAtLeastKm } from "@backend/lib/geo";
 import { formatZar } from "@backend/lib/money";
 import { filterByPriceBand, type PriceBand } from "@backend/lib/price-band";
+import {
+  busiestLevel,
+  nudgeBusyLevel,
+  type BusyLevel,
+} from "@backend/lib/calendar/busy";
+import { monthEnd, monthStart } from "@backend/lib/calendar/dates";
 import type { NearbyActivity } from "@backend/types/activity";
 import { stayKindLabel, stayLayoutLabel, type QuotedStay } from "@backend/types/stay";
+import { BusyBadge } from "@/components/calendar/busy-badge";
+import { BusyCalendar } from "@/components/calendar/busy-calendar";
+import { useBusyDays } from "@/components/calendar/use-busy-days";
+import { useLiveLocation } from "@/components/location/use-live-location";
 import { OpenBadge } from "@/components/plan/open-badge";
 import { PriceFilter } from "@/components/plan/price-filter";
 import { StayUnitsSelect } from "@/components/stay/stay-units-select";
@@ -33,6 +43,8 @@ type ItineraryExplorerProps = {
   destination: string;
   travellers: number;
   nights: number;
+  startDate: string;
+  endDate: string;
   initialCenter: MapCenter;
   initialStays: QuotedStay[];
   initialActivities: NearbyActivity[];
@@ -49,10 +61,41 @@ function firstOpenActivity(places: NearbyActivity[]) {
   return places.find((place) => !isClosed(place.openStatus));
 }
 
+type StayHub = {
+  id: string;
+  name: string;
+  area: string;
+  lat: number;
+  lng: number;
+};
+
+function hubFromStay(
+  stay: {
+    id: string;
+    name: string;
+    area: string;
+    latitude: number;
+    longitude: number;
+  } | null | undefined,
+): StayHub | null {
+  if (!stay) {
+    return null;
+  }
+  return {
+    id: stay.id,
+    name: stay.name,
+    area: stay.area,
+    lat: stay.latitude,
+    lng: stay.longitude,
+  };
+}
+
 export function ItineraryExplorer({
   tripId,
   destination,
   travellers,
+  startDate,
+  endDate,
   initialCenter,
   initialStays,
   initialActivities,
@@ -98,10 +141,32 @@ export function ItineraryExplorer({
   const [stayBand, setStayBand] = useState<PriceBand>("all");
   const [activityBand, setActivityBand] = useState<PriceBand>("all");
   const [foodBand, setFoodBand] = useState<PriceBand>("all");
+  const [month, setMonth] = useState(startDate.slice(0, 7));
+  const [stayHub, setStayHub] = useState<StayHub | null>(() =>
+    hubFromStay(
+      initialStays.find((stay) => stay.id === initialSelectedStayId),
+    ),
+  );
+  const live = useLiveLocation(initialCenter);
+  const lastGps = useRef<MapCenter | null>(null);
+  const didFlyToGps = useRef(false);
+  const keepPlaceIds = useRef<string[]>([]);
+  const staysRef = useRef(stays);
+  staysRef.current = stays;
 
   useEffect(() => {
     if (stayState?.selectedStayId !== undefined) {
       setChosenStayId(stayState.selectedStayId);
+      if (stayState.selectedStayId === null) {
+        setStayHub(null);
+      } else {
+        const stay = staysRef.current.find(
+          (listing) => listing.id === stayState.selectedStayId,
+        );
+        if (stay) {
+          setStayHub(hubFromStay(stay));
+        }
+      }
     }
     if (stayState?.selectedStayUnits != null) {
       setUnitCount(stayState.selectedStayUnits);
@@ -177,6 +242,30 @@ export function ItineraryExplorer({
     [visibleActivities, visibleFood],
   );
 
+  const activityCenter = stayHub
+    ? { lat: stayHub.lat, lng: stayHub.lng }
+    : live.nearDestination && live.location
+      ? live.location
+      : center;
+
+  keepPlaceIds.current = [...pickedIds, ...selectedActivityIds];
+
+  useEffect(() => {
+    if (!live.location || !live.nearDestination || stayHub) {
+      return;
+    }
+    const previous = lastGps.current;
+    if (previous && !movedAtLeastKm(previous, live.location, 0.35)) {
+      return;
+    }
+    lastGps.current = live.location;
+    setCenter(live.location);
+    if (!didFlyToGps.current) {
+      didFlyToGps.current = true;
+      setLocateRequest((value) => value + 1);
+    }
+  }, [live.location, live.nearDestination, stayHub?.id]);
+
   useEffect(() => {
     const handle = window.setTimeout(async () => {
       setLoading(true);
@@ -184,6 +273,8 @@ export function ItineraryExplorer({
         const params = new URLSearchParams({
           lat: String(center.lat),
           lng: String(center.lng),
+          activityLat: String(activityCenter.lat),
+          activityLng: String(activityCenter.lng),
         });
         const response = await fetch(
           `/api/trips/${tripId}/itinerary?${params.toString()}`,
@@ -195,15 +286,31 @@ export function ItineraryExplorer({
           stays: QuotedStay[];
           activities: NearbyActivity[];
         };
+        const keep = new Set(keepPlaceIds.current);
         setStays(data.stays);
-        setActivities(data.activities);
+        setActivities((current) => {
+          const extras = current.filter(
+            (place) =>
+              keep.has(place.id) &&
+              !data.activities.some((next) => next.id === place.id),
+          );
+          return extras.length
+            ? [...data.activities, ...extras]
+            : data.activities;
+        });
       } finally {
         setLoading(false);
       }
     }, 250);
 
     return () => window.clearTimeout(handle);
-  }, [center.lat, center.lng, tripId]);
+  }, [
+    activityCenter.lat,
+    activityCenter.lng,
+    center.lat,
+    center.lng,
+    tripId,
+  ]);
 
   useEffect(() => {
     const nextStay = stays.find((listing) => !isClosed(listing.openStatus));
@@ -251,11 +358,14 @@ export function ItineraryExplorer({
 
     navigator.geolocation.getCurrentPosition(
       (position) => {
-        setLocationMessage(null);
-        setCenter({
+        const next = {
           lat: position.coords.latitude,
           lng: position.coords.longitude,
-        });
+        };
+        lastGps.current = next;
+        didFlyToGps.current = true;
+        setLocationMessage(null);
+        setCenter(next);
         setLocateRequest((value) => value + 1);
       },
       () => {
@@ -263,6 +373,7 @@ export function ItineraryExplorer({
           `Could not read your location. Move the map or we will keep using ${destination}.`,
         );
       },
+      { enableHighAccuracy: true, timeout: 8000, maximumAge: 15000 },
     );
   }
 
@@ -273,6 +384,7 @@ export function ItineraryExplorer({
     }
     setSelectedKind("stay");
     setSelectedId(id);
+    setStayHub(hubFromStay(stay));
   }
 
   function selectActivity(id: string) {
@@ -324,11 +436,44 @@ export function ItineraryExplorer({
   );
   const chosenPlaces = orderedChosenPlaces();
   const stayForSummary = chosenStay;
+  const selectedStay = stays.find((stay) => stay.id === selectedId);
+  const calendarStay =
+    (selectedKind === "stay" ? selectedStay : null) ??
+    chosenStay ??
+    stays.find((stay) => stay.id === stayHub?.id) ??
+    null;
+  const calendarDays = useBusyDays({
+    destination,
+    start: monthStart(`${month}-01`),
+    end: monthEnd(`${month}-01`),
+    name: calendarStay?.name,
+    kind: "stay",
+    stayKind: calendarStay?.kind,
+  });
+  const tripDays = useBusyDays({
+    destination,
+    start: startDate,
+    end: endDate,
+  });
+
+  function listingBusy(id: string): BusyLevel | null {
+    const levels = tripDays
+      .filter((day) => day.date >= startDate && day.date <= endDate)
+      .map((day) => nudgeBusyLevel(day.level, id));
+    return levels.length ? busiestLevel(levels) : null;
+  }
 
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="max-w-xl space-y-2 text-sm text-muted">
+          <p>
+            {stayHub
+              ? `Activities and food are around ${stayHub.name} in ${stayHub.area}.`
+              : live.nearDestination
+                ? "Using your live location for nearby stays, activities, and food."
+                : `Activities follow your stay. Confirm a stay and the plan uses that neighbourhood in ${destination}.`}
+          </p>
           <p>Closed places stay off the plan.</p>
           <p className="flex flex-wrap items-center gap-x-4 gap-y-1">
             <span className="inline-flex items-center gap-1.5">
@@ -362,9 +507,31 @@ export function ItineraryExplorer({
         <p className="text-sm text-accent">{locationMessage}</p>
       ) : null}
 
+      <Card>
+        <BusyCalendar
+          month={month}
+          days={calendarDays}
+          rangeStart={startDate}
+          rangeEnd={endDate}
+          onMonthChange={setMonth}
+          title={
+            calendarStay
+              ? `How busy ${calendarStay.name} looks`
+              : "How busy stays look"
+          }
+        />
+        <p className="mt-3 text-sm text-muted">
+          Crowding uses South African public holidays and long weekends from the
+          internet, plus school holidays and typical visitor seasons. Your trip
+          dates are ringed.
+        </p>
+      </Card>
+
       <ItineraryMap
         key={tripId}
         center={center}
+        hub={activityCenter}
+        userLocation={live.location}
         stays={visibleStays}
         activities={mapActivities}
         selectedId={selectedId}
@@ -397,12 +564,15 @@ export function ItineraryExplorer({
             action={stayAction}
             onSelect={selectStay}
             onUnitsChange={setUnitCount}
+            busyFor={listingBusy}
           />
         <PlaceList
           title="Activities"
           emptyLabel={
             nearbyActivities.length === 0
-              ? "No activities nearby."
+              ? stayHub
+                ? `No activities near ${stayHub.name}.`
+                : "No activities nearby."
               : "No activities in this price range."
           }
           places={visibleActivities}
@@ -419,7 +589,9 @@ export function ItineraryExplorer({
           title="Food spots"
           emptyLabel={
             nearbyFood.length === 0
-              ? "No food spots nearby."
+              ? stayHub
+                ? `No food spots near ${stayHub.name}.`
+                : "No food spots nearby."
               : "No food spots in this price range."
           }
           places={visibleFood}
@@ -661,6 +833,7 @@ function StayList({
   action,
   onSelect,
   onUnitsChange,
+  busyFor,
 }: {
   tripId: string;
   stays: QuotedStay[];
@@ -677,7 +850,14 @@ function StayList({
   action: (formData: FormData) => void;
   onSelect: (id: string) => void;
   onUnitsChange: (units: number) => void;
+  busyFor: (id: string) => BusyLevel | null;
 }) {
+  const [showBusy, setShowBusy] = useState(false);
+
+  useEffect(() => {
+    setShowBusy(true);
+  }, []);
+
   return (
     <div className="overflow-hidden rounded-2xl border border-border bg-card">
       <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border px-6 py-4">
@@ -724,6 +904,7 @@ function StayList({
             const current = stay.id === selectedId;
             const chosen = stay.id === chosenStayId;
             const closed = isClosed(stay.openStatus);
+            const busy = busyFor(stay.id);
             return (
               <li key={stay.id}>
                 <div
@@ -742,8 +923,13 @@ function StayList({
                     className="min-w-0 flex-1 text-left disabled:cursor-not-allowed"
                   >
                     <div className="flex items-start justify-between gap-3">
-                      <p className="font-medium">{stay.name}</p>
-                      <OpenBadge status={stay.openStatus} />
+                      <p suppressHydrationWarning className="font-medium">
+                        {stay.name}
+                      </p>
+                      <span className="flex shrink-0 items-center gap-2">
+                        {showBusy && busy ? <BusyBadge level={busy} /> : null}
+                        <OpenBadge status={stay.openStatus} />
+                      </span>
                     </div>
                     <p className="mt-1 text-sm text-muted">
                       {stayKindLabel(stay.kind)} · {stay.area} ·{" "}

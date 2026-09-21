@@ -1,12 +1,13 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import { useActionState, useEffect, useMemo, useState } from "react";
+import { useActionState, useEffect, useMemo, useRef, useState } from "react";
 import { chooseStayAction } from "@/app/actions/stays";
-import { formatTravelAway } from "@backend/lib/geo";
+import { formatTravelAway, movedAtLeastKm } from "@backend/lib/geo";
 import { formatZar } from "@backend/lib/money";
 import { filterByPriceBand, type PriceBand } from "@backend/lib/price-band";
 import { stayKindLabel, stayLayoutLabel, type QuotedStay } from "@backend/types/stay";
+import { useLiveLocation } from "@/components/location/use-live-location";
 import { PriceFilter } from "@/components/plan/price-filter";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -50,6 +51,9 @@ export function StayExplorer({
   const [locationMessage, setLocationMessage] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [stayBand, setStayBand] = useState<PriceBand>("all");
+  const live = useLiveLocation(initialCenter);
+  const lastGps = useRef<MapCenter | null>(null);
+  const didFlyToGps = useRef(false);
   const [state, action, pending] = useActionState(chooseStayAction, {
     selectedStayId: initialSelectedStayId,
   });
@@ -69,6 +73,22 @@ export function StayExplorer({
       ),
     [chosenStayId, selectedId, stayBand, stays],
   );
+
+  useEffect(() => {
+    if (!live.location || !live.nearDestination) {
+      return;
+    }
+    const previous = lastGps.current;
+    if (previous && !movedAtLeastKm(previous, live.location, 0.35)) {
+      return;
+    }
+    lastGps.current = live.location;
+    setCenter(live.location);
+    if (!didFlyToGps.current) {
+      didFlyToGps.current = true;
+      setLocateRequest((value) => value + 1);
+    }
+  }, [live.location, live.nearDestination]);
 
   useEffect(() => {
     const handle = window.setTimeout(async () => {
@@ -108,11 +128,14 @@ export function StayExplorer({
 
     navigator.geolocation.getCurrentPosition(
       (position) => {
-        setLocationMessage(null);
-        setCenter({
+        const next = {
           lat: position.coords.latitude,
           lng: position.coords.longitude,
-        });
+        };
+        lastGps.current = next;
+        didFlyToGps.current = true;
+        setLocationMessage(null);
+        setCenter(next);
         setLocateRequest((value) => value + 1);
       },
       () => {
@@ -128,7 +151,8 @@ export function StayExplorer({
       <div className="flex flex-wrap items-start justify-between gap-3">
         <p className="max-w-xl text-sm text-muted">
           Priced for {travellers} {travellers === 1 ? "traveller" : "travellers"}{" "}
-          and {nights} {nights === 1 ? "night" : "nights"}. Blue pins are stays.
+          and {nights} {nights === 1 ? "night" : "nights"}. Stays follow your
+          live location when you are in {destination}.
         </p>
         <Button type="button" variant="secondary" onClick={useMyLocation}>
           Use my location
@@ -141,6 +165,7 @@ export function StayExplorer({
       <StayMap
         key={tripId}
         center={center}
+        userLocation={live.location}
         stays={visibleStays}
         selectedId={selectedId}
         locateRequest={locateRequest}

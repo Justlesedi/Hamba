@@ -1,12 +1,13 @@
 import { notFound } from "next/navigation";
-import { searchNearbyActivities } from "@backend/server/activities";
-import { searchNearbyStays } from "@backend/server/stays";
 import { listTripPlaceIds } from "@backend/server/plan";
+import { listingsAround } from "@backend/server/nearby";
+import { getStayById } from "@backend/server/stays";
 import { getTripForUser } from "@backend/server/trips";
 import { tripNights } from "@backend/lib/budget/estimates";
 import { resolveDestinationCenter } from "@backend/lib/geocode";
 import { ItineraryExplorer } from "@/components/itinerary/itinerary-explorer";
 import { verifySession } from "@/lib/dal";
+import { dateKey } from "@backend/lib/calendar/dates";
 
 export default async function Page({
   params,
@@ -36,6 +37,19 @@ export default async function Page({
   }
 
   const nights = tripNights(trip.startDate, trip.endDate);
+  const confirmedStay = trip.stayId ? getStayById(trip.stayId) : null;
+  const activityOrigin = confirmedStay
+    ? { lat: confirmedStay.latitude, lng: confirmedStay.longitude }
+    : initialCenter;
+  const listings = listingsAround({
+    stayOrigin: initialCenter,
+    activityOrigin,
+    nights,
+    units: trip.stayUnits,
+    travellers: trip.travellers,
+    keepStayId: trip.stayId,
+    keepActivityIds: listTripPlaceIds(trip.id),
+  });
 
   return (
     <section className="space-y-6">
@@ -48,16 +62,11 @@ export default async function Page({
         destination={trip.destination}
         travellers={trip.travellers}
         nights={nights}
+        startDate={dateKey(trip.startDate)}
+        endDate={dateKey(trip.endDate)}
         initialCenter={initialCenter}
-        initialStays={searchNearbyStays(initialCenter.lat, initialCenter.lng, {
-          nights,
-          units: trip.stayUnits,
-          travellers: trip.travellers,
-        })}
-        initialActivities={searchNearbyActivities(
-          initialCenter.lat,
-          initialCenter.lng,
-        )}
+        initialStays={listings.stays}
+        initialActivities={listings.activities}
         initialSelectedStayId={trip.stayId}
         initialStayUnits={trip.stayUnits}
         initialSelectedActivityIds={listTripPlaceIds(trip.id)}

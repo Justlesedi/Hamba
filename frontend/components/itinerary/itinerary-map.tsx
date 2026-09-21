@@ -12,6 +12,8 @@ export type PlanSelectionKind = "stay" | "activity";
 
 type ItineraryMapProps = {
   center: MapCenter;
+  hub: MapCenter;
+  userLocation?: MapCenter | null;
   stays: QuotedStay[];
   activities: NearbyActivity[];
   selectedId: string | null;
@@ -55,6 +57,8 @@ function pinIcon(
 
 export default function ItineraryMap({
   center,
+  hub,
+  userLocation = null,
   stays,
   activities,
   selectedId,
@@ -69,6 +73,7 @@ export default function ItineraryMap({
   const mapRef = useRef<L.Map | null>(null);
   const markersRef = useRef<L.LayerGroup | null>(null);
   const circleRef = useRef<L.Circle | null>(null);
+  const youRef = useRef<L.Marker | null>(null);
   const onSelectStayRef = useRef(onSelectStay);
   const onSelectActivityRef = useRef(onSelectActivity);
   const onCenterChangeRef = useRef(onCenterChange);
@@ -97,7 +102,7 @@ export default function ItineraryMap({
     }).addTo(map);
 
     markersRef.current = L.layerGroup().addTo(map);
-    circleRef.current = L.circle([center.lat, center.lng], {
+    circleRef.current = L.circle([hub.lat, hub.lng], {
       radius: MAX_ACTIVITY_DISTANCE_KM * 1000,
       color: "#c45c26",
       fillColor: "#c45c26",
@@ -123,14 +128,45 @@ export default function ItineraryMap({
       mapRef.current = null;
       markersRef.current = null;
       circleRef.current = null;
+      youRef.current = null;
     };
     // First mount only; later pans are handled by events and locateRequest.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
-    circleRef.current?.setLatLng([center.lat, center.lng]);
-  }, [center.lat, center.lng]);
+    circleRef.current?.setLatLng([hub.lat, hub.lng]);
+  }, [hub.lat, hub.lng]);
+
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map) {
+      return;
+    }
+
+    if (!userLocation) {
+      youRef.current?.remove();
+      youRef.current = null;
+      return;
+    }
+
+    if (!youRef.current) {
+      youRef.current = L.marker([userLocation.lat, userLocation.lng], {
+        icon: L.divIcon({
+          className: "hamba-pin-you",
+          html: "<span></span>",
+          iconSize: [18, 18],
+          iconAnchor: [9, 9],
+        }),
+        title: "You",
+        interactive: false,
+        zIndexOffset: 600,
+      }).addTo(map);
+      return;
+    }
+
+    youRef.current.setLatLng([userLocation.lat, userLocation.lng]);
+  }, [userLocation]);
 
   useEffect(() => {
     const map = mapRef.current;

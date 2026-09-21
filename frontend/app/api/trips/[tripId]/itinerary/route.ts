@@ -1,13 +1,24 @@
 import { NextResponse } from "next/server";
-import { searchNearbyActivities } from "@backend/server/activities";
-import { searchNearbyStays } from "@backend/server/stays";
 import { listTripPlaceIds } from "@backend/server/plan";
+import { listingsAround } from "@backend/server/nearby";
+import { getStayById } from "@backend/server/stays";
 import { nearbyActivitiesSchema } from "@backend/lib/validation";
-import { MAX_ACTIVITY_DISTANCE_KM } from "@backend/lib/geo";
+import { MAX_ACTIVITY_DISTANCE_KM, type MapCenter } from "@backend/lib/geo";
 import { tripNights } from "@backend/lib/budget/estimates";
 import { resolveDestinationCenter } from "@backend/lib/geocode";
 import { getTripForUser } from "@backend/server/trips";
 import { readSession } from "@/lib/session";
+
+function parsePoint(lat: string | null, lng: string | null) {
+  if (!lat && !lng) {
+    return null;
+  }
+  const parsed = nearbyActivitiesSchema.safeParse({ lat, lng });
+  if (!parsed.success) {
+    return "invalid" as const;
+  }
+  return parsed.data;
+}
 
 export async function GET(
   request: Request,
@@ -26,23 +37,31 @@ export async function GET(
   }
 
   const url = new URL(request.url);
-  const lat = url.searchParams.get("lat");
-  const lng = url.searchParams.get("lng");
+  const stayOrigin = parsePoint(
+    url.searchParams.get("lat"),
+    url.searchParams.get("lng"),
+  );
+  const activityOrigin = parsePoint(
+    url.searchParams.get("activityLat"),
+    url.searchParams.get("activityLng"),
+  );
 
-  let center = await resolveDestinationCenter(trip.destination);
-
-  if (lat && lng) {
-    const parsed = nearbyActivitiesSchema.safeParse({ lat, lng });
-    if (!parsed.success) {
-      return NextResponse.json(
-        { errors: parsed.error.flatten().fieldErrors },
-        { status: 400 },
-      );
-    }
-    center = parsed.data;
+  if (stayOrigin === "invalid" || activityOrigin === "invalid") {
+    return NextResponse.json(
+      { message: "That location is invalid." },
+      { status: 400 },
+    );
   }
 
-  if (!center) {
+  const destination = await resolveDestinationCenter(trip.destination);
+  const stayCenter = stayOrigin ?? destination;
+  const confirmedStay = trip.stayId ? getStayById(trip.stayId) : null;
+  const stayHub: MapCenter | null = confirmedStay
+    ? { lat: confirmedStay.latitude, lng: confirmedStay.longitude }
+    : null;
+  const activityCenter = activityOrigin ?? stayHub ?? stayCenter;
+
+  if (!stayCenter || !activityCenter) {
     return NextResponse.json(
       { message: "Could not place this destination on the map." },
       { status: 404 },
@@ -50,17 +69,23 @@ export async function GET(
   }
 
   const nights = tripNights(trip.startDate, trip.endDate);
+  const listings = listingsAround({
+    stayOrigin: stayCenter,
+    activityOrigin: activityCenter,
+    nights,
+    units: trip.stayUnits,
+    travellers: trip.travellers,
+    keepStayId: trip.stayId,
+    keepActivityIds: listTripPlaceIds(tripId),
+  });
 
   return NextResponse.json({
-    center,
+    center: stayCenter,
+    activityCenter,
     maxDistanceKm: MAX_ACTIVITY_DISTANCE_KM,
     selectedStayId: trip.stayId,
     selectedActivityIds: listTripPlaceIds(tripId),
-    stays: searchNearbyStays(center.lat, center.lng, {
-      nights,
-      units: trip.stayUnits,
-      travellers: trip.travellers,
-    }),
-    activities: searchNearbyActivities(center.lat, center.lng),
+    stays: listings.stays,
+    activities: listings.activities,
   });
 }

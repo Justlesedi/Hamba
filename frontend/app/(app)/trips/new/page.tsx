@@ -7,7 +7,7 @@ export default function Page() {
       <div>
         <h1 className="text-2xl font-semibold">New trip</h1>
         <p className="text-sm text-muted">
-          Trip name, destination, dates, and travellers.
+          Trip name, destination, dates on the calendar, and travellers.
         </p>
       </div>
       <Card>

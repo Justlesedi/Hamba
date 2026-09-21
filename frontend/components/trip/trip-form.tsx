@@ -1,12 +1,14 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useState } from "react";
 import { createTripAction } from "@/app/actions/trips";
+import { TripDatePicker } from "@/components/calendar/trip-date-picker";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
 export function TripForm() {
   const [state, action, pending] = useActionState(createTripAction, undefined);
+  const [destination, setDestination] = useState("");
 
   return (
     <form action={action} className="space-y-4">
@@ -21,21 +23,14 @@ export function TripForm() {
         name="destination"
         placeholder="Cape Town"
         error={state?.errors?.destination?.[0]}
+        value={destination}
+        onChange={(event) => setDestination(event.target.value)}
       />
-      <div className="grid gap-4 sm:grid-cols-2">
-        <Input
-          label="Departure date"
-          name="startDate"
-          type="date"
-          error={state?.errors?.startDate?.[0]}
-        />
-        <Input
-          label="Return date"
-          name="endDate"
-          type="date"
-          error={state?.errors?.endDate?.[0]}
-        />
-      </div>
+      <TripDatePicker
+        destination={destination}
+        startError={state?.errors?.startDate?.[0]}
+        endError={state?.errors?.endDate?.[0]}
+      />
       <Input
         label="Travellers"
         name="travellers"
