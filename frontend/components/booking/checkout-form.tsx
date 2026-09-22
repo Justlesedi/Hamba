@@ -1,16 +1,15 @@
 "use client";
 
-import { useActionState } from "react";
 import Link from "next/link";
-import { createBookingAction } from "@/app/actions/bookings";
 import { placePartyCostCents } from "@backend/lib/activities/costs";
-import { bookingCommissionCents, bookingCommissionLabel } from "@backend/lib/booking";
-import { formatTravelAway } from "@backend/lib/geo";
+import {
+  activityHandoff,
+  stayHandoff,
+  type BookingHandoff,
+} from "@backend/lib/booking-links";
 import { formatZar } from "@backend/lib/money";
 import type { NearbyActivity } from "@backend/types/activity";
-import { stayKindLabel, stayLayoutLabel, type QuotedStay } from "@backend/types/stay";
-import { OpenBadge } from "@/components/plan/open-badge";
-import { Button } from "@/components/ui/button";
+import { type QuotedStay } from "@backend/types/stay";
 import { Card } from "@/components/ui/card";
 
 function activityPartyCents(place: NearbyActivity, travellers: number) {
@@ -20,55 +19,83 @@ function activityPartyCents(place: NearbyActivity, travellers: number) {
   });
 }
 
+function stayUnitsLabel(stay: QuotedStay) {
+  if (stay.kind === "house") {
+    return stay.units === 1 ? "1 house" : `${stay.units} houses`;
+  }
+  return stay.units === 1 ? "1 room" : `${stay.units} rooms`;
+}
+
+function HandoffAction({ handoff }: { handoff: BookingHandoff }) {
+  if (handoff.mode === "in_person" || !handoff.href) {
+    return (
+      <p className="mt-3 text-sm text-muted">
+        You have to travel there yourself. This place does not take bookings
+        online.
+      </p>
+    );
+  }
+
+  return (
+    <div className="mt-3 space-y-2">
+      <a
+        href={handoff.href}
+        target="_blank"
+        rel="noreferrer"
+        className="inline-flex items-center justify-center rounded-full bg-accent px-5 py-2.5 text-sm font-medium text-white hover:bg-accent-hover"
+      >
+        {handoff.label}
+      </a>
+      <p className="text-sm text-muted">Hamba sends {handoff.carries}</p>
+    </div>
+  );
+}
+
 export function CheckoutForm({
   tripId,
   travellers,
+  startDate,
+  endDate,
   stay,
   activities,
 }: {
   tripId: string;
   travellers: number;
+  startDate: string;
+  endDate: string;
   stay: QuotedStay | null;
   activities: NearbyActivity[];
 }) {
-  const [state, action, pending] = useActionState(
-    createBookingAction,
-    undefined,
-  );
   const planHref = `/trips/${tripId}/itinerary`;
-  const placesTotalCents = activities.reduce(
-    (sum, place) => sum + activityPartyCents(place, travellers),
-    0,
+  const bookable = activities.filter(
+    (place) => place.ticketChannel === "online",
   );
-  const stayTotalCents = stay?.totalCents ?? 0;
-  const commissionCents = bookingCommissionCents(stayTotalCents + placesTotalCents);
-  const totalCents = stayTotalCents + placesTotalCents + commissionCents;
+  const inPerson = activities.filter(
+    (place) => place.ticketChannel === "venue",
+  );
+  const stayBooking = stay
+    ? stayHandoff(stay, {
+        checkIn: startDate,
+        checkOut: endDate,
+        travellers,
+        units: stay.units,
+      })
+    : null;
 
   return (
     <div className="space-y-6">
       <Card>
         <h2 className="font-medium">Accommodation</h2>
-        {stay ? (
+        {stay && stayBooking ? (
           <div className="mt-4">
-            <div className="flex items-start justify-between gap-3">
-              <p className="font-medium">{stay.name}</p>
-              <OpenBadge status={stay.openStatus} />
-            </div>
+            <p className="font-medium">{stay.name}</p>
             <p className="mt-1 text-sm text-muted">
-              {stayKindLabel(stay.kind)} · {stay.area} ·{" "}
-              {formatTravelAway(stay.distanceKm)} · {stay.units}{" "}
-              {stay.kind === "house"
-                ? stay.units === 1
-                  ? "house"
-                  : "houses"
-                : stay.units === 1
-                  ? "room"
-                  : "rooms"}{" "}
-              · {stayLayoutLabel(stay)}
+              {stay.area} · {stayUnitsLabel(stay)} · {stayBooking.platform}
             </p>
-            <p className="mt-1 text-sm font-medium">
-              {formatZar(stay.totalCents)}
+            <p className="mt-1 text-sm text-muted">
+              About {formatZar(stay.totalCents)}
             </p>
+            <HandoffAction handoff={stayBooking} />
           </div>
         ) : (
           <p className="mt-3 text-sm text-muted">
@@ -83,77 +110,58 @@ export function CheckoutForm({
 
       <Card>
         <h2 className="font-medium">Activities</h2>
-        {activities.length === 0 ? (
+        {bookable.length === 0 && inPerson.length === 0 ? (
           <p className="mt-3 text-sm text-muted">
-            No activities from your Plan need a booking. Add places on{" "}
+            No ticketed activities from{" "}
             <Link href={planHref} className="font-medium hover:text-accent">
               Plan
             </Link>
-            , or Advance with the stay only.
+            .
           </p>
         ) : (
-          <ul className="mt-4 divide-y divide-border">
-            {activities.map((place) => (
-              <li key={place.id} className="flex items-start justify-between gap-3 py-3">
-                <div className="min-w-0">
-                  <div className="flex items-start justify-between gap-3">
-                    <p className="font-medium">{place.name}</p>
-                    <OpenBadge status={place.openStatus} />
-                  </div>
-                  <p className="mt-1 text-sm text-muted">
-                    {place.area} · {formatTravelAway(place.distanceKm)}
-                  </p>
-                </div>
-                <p className="shrink-0 text-sm font-medium">
-                  {formatZar(activityPartyCents(place, travellers))}
-                </p>
-              </li>
-            ))}
-          </ul>
-        )}
-      </Card>
-
-      <Card>
-        <form action={action} className="space-y-5">
-          <input type="hidden" name="tripId" value={tripId} />
-          {stay ? <input type="hidden" name="stayId" value={stay.id} /> : null}
-          {activities.map((place) => (
-            <input key={place.id} type="hidden" name="activityId" value={place.id} />
-          ))}
-
-          <div className="rounded-xl bg-background px-4 py-3">
-            <div className="flex justify-between gap-4 text-sm">
-              <span className="text-muted">Stay</span>
-              <span>{formatZar(stayTotalCents)}</span>
-            </div>
-            <div className="mt-2 flex justify-between gap-4 text-sm">
-              <span className="text-muted">Activities</span>
-              <span>{formatZar(placesTotalCents)}</span>
-            </div>
-            <div className="mt-2 flex justify-between gap-4 text-sm">
-              <span className="text-muted">{bookingCommissionLabel()}</span>
-              <span>{formatZar(commissionCents)}</span>
-            </div>
-            <div className="mt-3 flex justify-between gap-4 border-t border-border pt-3">
-              <span className="font-medium">Booking total</span>
-              <span className="text-lg font-semibold">
-                {formatZar(totalCents)}
-              </span>
-            </div>
+          <div className="mt-4 space-y-6">
+            {bookable.length > 0 ? (
+              <section>
+                <h3 className="text-sm font-medium">Buy tickets</h3>
+                <ul className="mt-2 divide-y divide-border">
+                  {bookable.map((place) => {
+                    const handoff = activityHandoff(place, {
+                      visitDate: startDate,
+                      travellers,
+                    });
+                    return (
+                      <li key={place.id} className="py-3">
+                        <p className="font-medium">{place.name}</p>
+                        <p className="mt-1 text-sm text-muted">
+                          {handoff.platform} · About{" "}
+                          {formatZar(activityPartyCents(place, travellers))}
+                        </p>
+                        <HandoffAction handoff={handoff} />
+                      </li>
+                    );
+                  })}
+                </ul>
+              </section>
+            ) : null}
+            {inPerson.length > 0 ? (
+              <section>
+                <h3 className="text-sm font-medium">Travel there yourself</h3>
+                <ul className="mt-2 divide-y divide-border">
+                  {inPerson.map((place) => (
+                    <li key={place.id} className="py-3">
+                      <p className="font-medium">{place.name}</p>
+                      <p className="mt-1 text-sm text-muted">{place.company}</p>
+                      <p className="mt-3 text-sm text-muted">
+                        You have to travel there yourself. This place does not
+                        take bookings online.
+                      </p>
+                    </li>
+                  ))}
+                </ul>
+              </section>
+            ) : null}
           </div>
-
-          {state?.message ? (
-            <p className="text-sm text-accent">{state.message}</p>
-          ) : null}
-
-          <p className="text-sm text-muted">
-            Advance finalizes these choices on Hamba. Sending them to the
-            property and activity operators comes later.
-          </p>
-          <Button type="submit" disabled={pending || !stay}>
-            {pending ? "Saving…" : stay ? "Advance" : "Confirm a stay on Plan"}
-          </Button>
-        </form>
+        )}
       </Card>
     </div>
   );

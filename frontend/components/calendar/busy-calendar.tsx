@@ -81,6 +81,10 @@ export function BusyCalendar({
         ) : null}
       </div>
       <BusyLegend />
+      <p className="text-sm text-muted">
+        Tip: These colours are planning estimates. They do not change booking
+        options.
+      </p>
       <div className="grid grid-cols-7 gap-1 text-center text-xs text-muted">
         {WEEKDAYS.map((day) => (
           <div key={day} className="py-1">

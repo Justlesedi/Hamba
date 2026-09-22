@@ -30,6 +30,8 @@ export function BookingConfirmation({
     undefined,
   );
   const activities = booking.places.filter((place) => place.kind !== "food");
+  const online = activities.filter((place) => place.ticketChannel === "online");
+  const venue = activities.filter((place) => place.ticketChannel === "venue");
   const cancelled = booking.status === "cancelled";
   const showFlights = Boolean(booking.outbound || booking.inbound);
 
@@ -63,9 +65,7 @@ export function BookingConfirmation({
             </div>
           </div>
         ) : null}
-        <p className="mt-2 text-sm text-muted">
-          Recorded on Hamba. Paying the stay and activity operators comes later.
-        </p>
+        <p className="mt-2 text-sm text-muted">Recorded on Hamba.</p>
       </Card>
 
       <Card>
@@ -79,23 +79,45 @@ export function BookingConfirmation({
 
       <Card>
         <h2 className="font-medium">Activities</h2>
-        {activities.length === 0 ? (
+        {online.length === 0 && venue.length === 0 ? (
           <p className="mt-2 text-sm text-muted">
             No reserved activities on this booking.
           </p>
         ) : (
-          <ol className="mt-2 list-decimal space-y-2 pl-5">
-            {activities.map((place) => (
-              <li key={place.activityId} className="pl-1">
-                <div className="flex justify-between gap-4">
-                  <span>{place.name}</span>
-                  <span className="text-sm font-medium">
-                    {formatZar(place.amountCents)}
-                  </span>
-                </div>
-              </li>
-            ))}
-          </ol>
+          <div className="mt-4 space-y-6">
+            {online.length > 0 ? (
+              <section>
+                <h3 className="text-sm font-medium">Tickets</h3>
+                <ol className="mt-2 list-decimal space-y-2 pl-5">
+                  {online.map((place) => (
+                    <li key={place.activityId} className="pl-1">
+                      <div className="flex justify-between gap-4">
+                        <span>{place.name}</span>
+                        <span className="text-sm font-medium">
+                          {formatZar(place.amountCents)}
+                        </span>
+                      </div>
+                    </li>
+                  ))}
+                </ol>
+              </section>
+            ) : null}
+            {venue.length > 0 ? (
+              <section>
+                <h3 className="text-sm font-medium">Pay at the venue</h3>
+                <ol className="mt-2 list-decimal space-y-2 pl-5">
+                  {venue.map((place) => (
+                    <li key={place.activityId} className="pl-1">
+                      <span>{place.name}</span>
+                      <span className="mt-1 block text-sm text-muted">
+                        {place.company}
+                      </span>
+                    </li>
+                  ))}
+                </ol>
+              </section>
+            ) : null}
+          </div>
         )}
       </Card>
 

@@ -1,11 +1,11 @@
 import Link from "next/link";
-import { notFound, redirect } from "next/navigation";
-import { listBookableActivities } from "@backend/server/activities";
-import { getConfirmedBookingForTrip } from "@backend/server/bookings";
+import { notFound } from "next/navigation";
+import { listCheckoutActivities } from "@backend/server/activities";
 import { listTripPlaceIds } from "@backend/server/plan";
 import { getStayById, quoteStay } from "@backend/server/stays";
 import { getTripForUser } from "@backend/server/trips";
 import { tripNights } from "@backend/lib/budget/estimates";
+import { dateKey } from "@backend/lib/calendar/dates";
 import { haversineKm } from "@backend/lib/geo";
 import { resolveDestinationCenter } from "@backend/lib/geocode";
 import { CheckoutForm } from "@/components/booking/checkout-form";
@@ -22,11 +22,6 @@ export default async function Page({
 
   if (!trip) {
     notFound();
-  }
-
-  const existing = getConfirmedBookingForTrip(userId, tripId);
-  if (existing) {
-    redirect(`/bookings/${existing.id}`);
   }
 
   const center = await resolveDestinationCenter(trip.destination);
@@ -52,7 +47,7 @@ export default async function Page({
           : 0,
       })
     : null;
-  const activities = listBookableActivities(listTripPlaceIds(trip.id), from);
+  const activities = listCheckoutActivities(listTripPlaceIds(trip.id), from);
 
   return (
     <section className="space-y-6">
@@ -64,10 +59,16 @@ export default async function Page({
         </p>
         <h1 className="mt-2 text-2xl font-semibold">Book {trip.title}</h1>
         <p className="text-sm text-muted">{trip.destination}</p>
+        <p className="mt-2 text-sm text-muted">
+          Hamba does not take payment. Your dates and travellers go to that
+          place’s booking site. If it has no site, you travel there.
+        </p>
       </div>
       <CheckoutForm
         tripId={trip.id}
         travellers={trip.travellers}
+        startDate={dateKey(trip.startDate)}
+        endDate={dateKey(trip.endDate)}
         stay={stay}
         activities={activities}
       />

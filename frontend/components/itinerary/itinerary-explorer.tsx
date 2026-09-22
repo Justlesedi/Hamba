@@ -14,6 +14,7 @@ import {
   type BusyLevel,
 } from "@backend/lib/calendar/busy";
 import { monthEnd, monthStart } from "@backend/lib/calendar/dates";
+import { ticketChannelLabel } from "@backend/lib/activities/tickets";
 import type { NearbyActivity } from "@backend/types/activity";
 import { stayKindLabel, stayLayoutLabel, type QuotedStay } from "@backend/types/stay";
 import { BusyBadge } from "@/components/calendar/busy-badge";
@@ -466,37 +467,11 @@ export function ItineraryExplorer({
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap items-start justify-between gap-3">
-        <div className="max-w-xl space-y-2 text-sm text-muted">
+        <div className="max-w-xl text-sm text-muted">
           <p>
             {stayHub
               ? `Activities and food are around ${stayHub.name} in ${stayHub.area}.`
-              : live.nearDestination
-                ? "Using your live location for nearby stays, activities, and food."
-                : `Activities follow your stay. Confirm a stay and the plan uses that neighbourhood in ${destination}.`}
-          </p>
-          <p>Closed places stay off the plan.</p>
-          <p className="flex flex-wrap items-center gap-x-4 gap-y-1">
-            <span className="inline-flex items-center gap-1.5">
-              <span
-                className="size-2.5 rounded-full bg-[var(--stay)]"
-                aria-hidden
-              />
-              Blue pins are stays
-            </span>
-            <span className="inline-flex items-center gap-1.5">
-              <span
-                className="size-2.5 rounded-full bg-[var(--accent)]"
-                aria-hidden
-              />
-              Orange pins are activities
-            </span>
-            <span className="inline-flex items-center gap-1.5">
-              <span
-                className="size-2.5 rounded-full bg-[var(--food)]"
-                aria-hidden
-              />
-              Green pins are food
-            </span>
+              : `Confirm a stay so activities and food use that area in ${destination}.`}
           </p>
         </div>
         <Button type="button" variant="secondary" onClick={useMyLocation}>
@@ -520,11 +495,6 @@ export function ItineraryExplorer({
               : "How busy stays look"
           }
         />
-        <p className="mt-3 text-sm text-muted">
-          Crowding uses South African public holidays and long weekends from the
-          internet, plus school holidays and typical visitor seasons. Your trip
-          dates are ringed.
-        </p>
       </Card>
 
       <ItineraryMap
@@ -1057,6 +1027,11 @@ function PlaceList({
                     <p className="mt-1 text-sm text-muted">
                       {place.area} · {formatTravelAway(place.distanceKm)}
                     </p>
+                    {place.kind === "activity" ? (
+                      <p className="mt-1 text-sm text-muted">
+                        {place.company} · {ticketChannelLabel(place.ticketChannel)}
+                      </p>
+                    ) : null}
                     <p className="mt-1 text-sm">
                       {place.estimatedCostCents === 0
                         ? "Free"

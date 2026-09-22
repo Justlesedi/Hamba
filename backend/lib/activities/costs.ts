@@ -133,32 +133,3 @@ export function placePartyCostCents(
 ) {
   return unitCents * Math.max(1, travellers);
 }
-
-const PAY_ON_ARRIVAL = new Set([
-  "act_chapmans_peak",
-  "act_gods_window",
-  "act_bourkes_luck",
-  "act_three_rondavels",
-  "act_cape_point",
-  "act_pilanesberg",
-  "act_golden_gate",
-  "act_augrabies",
-  "act_goegap",
-  "act_springbok_goegap",
-  "act_kgaswane",
-  "act_rustenburg_kgaswane",
-]);
-
-export function activityRequiresBooking(options: {
-  id: string;
-  kind: "activity" | "food";
-  estimatedCostCents: number;
-}) {
-  if (options.kind !== "activity") {
-    return false;
-  }
-  if (options.estimatedCostCents <= 0) {
-    return false;
-  }
-  return !PAY_ON_ARRIVAL.has(options.id);
-}

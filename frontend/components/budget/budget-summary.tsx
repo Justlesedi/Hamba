@@ -277,8 +277,8 @@ function ForecastResults({
       <Card>
         <h2 className="font-medium">Ready to book?</h2>
         <p className="mt-2 text-sm text-muted">
-          Booking uses the stay and activities from Plan. Advance when those
-          choices are ready.
+          Hamba does not take payment. Your dates and travellers go to that
+          place’s booking site.
         </p>
         <p className="mt-4">
           <Link

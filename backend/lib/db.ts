@@ -130,6 +130,7 @@ db.exec(`
     company TEXT NOT NULL,
     area TEXT NOT NULL,
     amountCents INTEGER NOT NULL,
+    ticketChannel TEXT NOT NULL DEFAULT 'online',
     sortOrder INTEGER NOT NULL,
     PRIMARY KEY (bookingId, activityId),
     FOREIGN KEY (bookingId) REFERENCES bookings(id) ON DELETE CASCADE
@@ -240,5 +241,19 @@ seedStays(db);
         `ALTER TABLE bookings ADD COLUMN commissionCents INTEGER NOT NULL DEFAULT 0`,
       );
     }
+  }
+}
+
+{
+  const columns = db.prepare(`PRAGMA table_info(booking_places)`).all() as {
+    name: string;
+  }[];
+  if (
+    columns.length > 0 &&
+    !columns.some((column) => column.name === "ticketChannel")
+  ) {
+    db.exec(
+      `ALTER TABLE booking_places ADD COLUMN ticketChannel TEXT NOT NULL DEFAULT 'online'`,
+    );
   }
 }

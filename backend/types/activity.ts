@@ -18,5 +18,5 @@ export type NearbyActivity = Activity & {
   priceUnit: PriceUnit;
   typicalHours: number;
   openStatus: import("../lib/hours").OpenStatus;
-  requiresBooking: boolean;
+  ticketChannel: import("../lib/activities/tickets").TicketChannel;
 };

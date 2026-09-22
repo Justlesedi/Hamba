@@ -7,8 +7,8 @@ import {
 import {
   activityCostCents,
   activityPricing,
-  activityRequiresBooking,
 } from "../lib/activities/costs";
+import { ticketChannel } from "../lib/activities/tickets";
 import { openStatusFromHours } from "../lib/hours";
 import type { Activity, NearbyActivity } from "../types/activity";
 
@@ -49,7 +49,7 @@ function withPlanFields(activity: Activity, distanceKm: number): NearbyActivity 
     priceUnit: pricing.priceUnit,
     typicalHours: pricing.typicalHours,
     openStatus: openStatusFromHours(activity.operatingHours),
-    requiresBooking: activityRequiresBooking(activity),
+    ticketChannel: ticketChannel(activity),
   };
 }
 
@@ -108,7 +108,7 @@ export function getNearbyActivityById(
   return withPlanFields(activity, distanceKm);
 }
 
-export function listBookableActivities(
+export function listCheckoutActivities(
   activityIds: string[],
   from?: { lat: number; lng: number },
 ) {
@@ -117,7 +117,8 @@ export function listBookableActivities(
     .filter(
       (place): place is NearbyActivity =>
         place != null &&
-        place.requiresBooking &&
+        place.kind === "activity" &&
+        place.ticketChannel !== "none" &&
         place.openStatus.state !== "closed",
     );
 }

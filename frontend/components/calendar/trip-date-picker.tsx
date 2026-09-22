@@ -85,8 +85,7 @@ export function TripDatePicker({
           ? end
             ? `Selected ${start} to ${end}.`
             : `Departure ${start}. Pick a return date.`
-          : "Pick a departure date, then a return date."}{" "}
-        Green is quieter, yellow is moderate, red is full.
+          : "Pick a departure date, then a return date."}
       </p>
       {startError ? <p className="text-sm text-accent">{startError}</p> : null}
       {endError ? <p className="text-sm text-accent">{endError}</p> : null}

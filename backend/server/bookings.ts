@@ -10,6 +10,10 @@ import { db } from "../lib/db";
 import { getNearbyActivityById } from "./activities";
 import { getStayById, quoteStay } from "./stays";
 import { getTripForUser } from "./trips";
+import {
+  isTicketChannel,
+  type TicketChannel,
+} from "../lib/activities/tickets";
 import type { Booking, BookingPlace } from "../types/booking";
 
 type BookingRow = {
@@ -49,6 +53,7 @@ type BookingPlaceRow = {
   company: string;
   area: string;
   amountCents: number;
+  ticketChannel: string | null;
   sortOrder: number;
 };
 
@@ -67,6 +72,9 @@ function mapPlace(row: BookingPlaceRow): BookingPlace {
     company: row.company,
     area: row.area,
     amountCents: Number(row.amountCents),
+    ticketChannel: isTicketChannel(row.ticketChannel)
+      ? row.ticketChannel
+      : "online",
     sortOrder: Number(row.sortOrder),
   };
 }
@@ -119,7 +127,7 @@ function mapBooking(row: BookingRow, places: BookingPlace[]): Booking {
 function listBookingPlaces(bookingId: string) {
   const rows = db
     .prepare(
-      `SELECT bookingId, activityId, name, kind, company, area, amountCents, sortOrder
+      `SELECT bookingId, activityId, name, kind, company, area, amountCents, ticketChannel, sortOrder
        FROM booking_places WHERE bookingId = ? ORDER BY sortOrder, activityId`,
     )
     .all(bookingId) as BookingPlaceRow[];
@@ -196,6 +204,7 @@ export function createBooking(
     company: string;
     area: string;
     amountCents: number;
+    ticketChannel: TicketChannel;
   }> = [];
 
   for (const activityId of [...new Set(input.activityIds.filter(Boolean))]) {
@@ -203,10 +212,8 @@ export function createBooking(
     if (!place) {
       throw new BookingError("One of the activities could not be found.");
     }
-    if (!place.requiresBooking) {
-      throw new BookingError(
-        `${place.name} does not need a booking. Pay on arrival or skip it.`,
-      );
+    if (place.kind !== "activity" || place.ticketChannel === "none") {
+      continue;
     }
     if (place.openStatus.state === "closed") {
       throw new BookingError(
@@ -214,10 +221,12 @@ export function createBooking(
       );
     }
 
-    const unitCents =
-      place.estimatedCostCents > 0
+    const online = place.ticketChannel === "online";
+    const unitCents = online
+      ? place.estimatedCostCents > 0
         ? place.estimatedCostCents
-        : activityCostCents(place.id);
+        : activityCostCents(place.id)
+      : 0;
     const pricing = activityPricing(place.id, place.kind);
 
     places.push({
@@ -226,12 +235,16 @@ export function createBooking(
       kind: "activity",
       company: place.company,
       area: place.area,
-      amountCents: placePartyCostCents(unitCents, trip.travellers, pricing),
+      amountCents: online
+        ? placePartyCostCents(unitCents, trip.travellers, pricing)
+        : 0,
+      ticketChannel: place.ticketChannel,
     });
   }
 
   const placesTotalCents = places.reduce(
-    (sum, place) => sum + place.amountCents,
+    (sum, place) =>
+      place.ticketChannel === "online" ? sum + place.amountCents : sum,
     0,
   );
   const commissionCents = bookingCommissionCents(
@@ -282,8 +295,8 @@ export function createBooking(
 
     const insertPlace = db.prepare(
       `INSERT INTO booking_places (
-        bookingId, activityId, name, kind, company, area, amountCents, sortOrder
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+        bookingId, activityId, name, kind, company, area, amountCents, ticketChannel, sortOrder
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     );
 
     places.forEach((place, index) => {
@@ -295,6 +308,7 @@ export function createBooking(
         place.company,
         place.area,
         place.amountCents,
+        place.ticketChannel,
         index,
       );
     });

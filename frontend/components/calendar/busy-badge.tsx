@@ -18,21 +18,17 @@ export function BusyBadge({ level }: { level: BusyLevel }) {
   );
 }
 
+const LEGEND_LEVELS: BusyLevel[] = ["empty", "moderate", "full"];
+
 export function BusyLegend() {
   return (
     <p className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-muted">
-      <span className="inline-flex items-center gap-1.5">
-        <span className="size-2.5 rounded-full bg-[var(--busy-empty)]" aria-hidden />
-        Green is empty
-      </span>
-      <span className="inline-flex items-center gap-1.5">
-        <span className="size-2.5 rounded-full bg-[var(--busy-moderate)]" aria-hidden />
-        Yellow is moderate
-      </span>
-      <span className="inline-flex items-center gap-1.5">
-        <span className="size-2.5 rounded-full bg-[var(--busy-full)]" aria-hidden />
-        Red is full
-      </span>
+      {LEGEND_LEVELS.map((level) => (
+        <span key={level} className="inline-flex items-center gap-1.5">
+          <span className={`size-2.5 rounded-full ${DOT[level]}`} aria-hidden />
+          {busyLevelLabel(level)}
+        </span>
+      ))}
     </p>
   );
 }

@@ -1,3 +1,4 @@
+import type { TicketChannel } from "../lib/activities/tickets";
 import type { PlaceKind } from "./activity";
 
 export type TransportMode = "uber" | "bus" | "fuel" | "none";
@@ -10,6 +11,7 @@ export type BookingPlace = {
   company: string;
   area: string;
   amountCents: number;
+  ticketChannel: TicketChannel;
   sortOrder: number;
 };
 
