@@ -5,7 +5,7 @@ export type Scene = {
 
 export const SCENES = {
   cape: {
-    src: "/media/cape-town.jpg",
+    src: "/media/table-mountain.jpg",
     alt: "Table Mountain from the Atlantic shore",
   },
   safari: {
@@ -13,23 +13,23 @@ export const SCENES = {
     alt: "Elephants on Southern African savanna",
   },
   wine: {
-    src: "/media/winelands.jpg",
+    src: "/media/stellenbosch.jpg",
     alt: "Vineyards under the mountains near Stellenbosch",
   },
   mountain: {
-    src: "/media/mountains.jpg",
+    src: "/media/drakensberg.jpg",
     alt: "The Drakensberg escarpment",
   },
   ocean: {
-    src: "/media/ocean.jpg",
+    src: "/media/durban-beach.jpg",
     alt: "Durban beach and the Golden Mile",
   },
   coast: {
-    src: "/media/coast-road.jpg",
+    src: "/media/knysna-heads.jpg",
     alt: "The Knysna Heads on the Garden Route",
   },
   lion: {
-    src: "/media/lion.jpg",
+    src: "/media/african-lion.jpg",
     alt: "A lion in Southern African grassland",
   },
 } as const;
