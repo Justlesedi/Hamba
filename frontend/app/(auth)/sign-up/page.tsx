@@ -1,14 +1,15 @@
 import Link from "next/link";
 import { SignUpForm } from "@/components/auth/sign-up-form";
-import { Card } from "@/components/ui/card";
+
+export const metadata = { title: "Create account" };
 
 export default function Page() {
   return (
-    <Card>
-      <p className="text-sm font-medium text-muted">Hamba</p>
-      <h1 className="mt-2 text-2xl font-semibold">Create your account</h1>
-      <p className="mt-1 mb-6 text-sm text-muted">
-        Email and password is enough for this first version.
+    <div>
+      <p className="font-display text-3xl">Hamba</p>
+      <h1 className="mt-6 font-display text-4xl">Take the first step.</h1>
+      <p className="mt-2 mb-8 text-muted">
+        A name, an email, a password. Then a destination.
       </p>
       <SignUpForm />
       <p className="mt-6 text-sm text-muted">
@@ -17,6 +18,13 @@ export default function Page() {
           Sign in
         </Link>
       </p>
-    </Card>
+      <p className="mt-8 text-xs text-muted">
+        <Link href="/">Home</Link>
+        {" · "}
+        <Link href="/privacy">Privacy</Link>
+        {" · "}
+        <Link href="/terms">Terms</Link>
+      </p>
+    </div>
   );
 }

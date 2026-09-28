@@ -15,6 +15,26 @@ type TripHandoff = {
   units: number;
 };
 
+type StayHandoffInput = {
+  id?: string;
+  name: string;
+  company: string;
+  area: string;
+  kind: StayKind;
+};
+
+/** Booking.com property paths we have checked, so the link opens that stay with dates already searched. */
+const BOOKING_COM_HOTEL_PATHS: Record<string, string> = {
+  stay_gqe_kelway: "za/the-kelway",
+  stay_ct_tintswalo: "za/tintswalo-atlantic",
+  stay_ct_silo: "za/the-silo",
+  stay_ct_capegrace: "za/cape-grace",
+  stay_ct_twelveapostles: "za/the-twelve-apostles",
+  stay_umh_oysterbox: "za/the-oyster-box",
+  stay_jhb_saxon: "za/the-saxon",
+  stay_ct_oneandonly: "za/one-and-only-cape-town",
+};
+
 function searchQuery(parts: Array<string | null | undefined>) {
   return parts
     .map((part) => part?.trim())
@@ -54,10 +74,7 @@ function tripCarry(options: {
     .join(" · ");
 }
 
-function withTripParams(
-  url: string,
-  fields: Record<string, string>,
-) {
+function withTripParams(url: string, fields: Record<string, string>) {
   const parsed = new URL(url);
   for (const [key, value] of Object.entries(fields)) {
     parsed.searchParams.set(key, value);
@@ -108,7 +125,13 @@ function companyHas(company: string, fragment: string) {
   return company.toLowerCase().includes(fragment.toLowerCase());
 }
 
-function bookingComUrl(options: {
+function occupancy(options: { travellers: number; units: number }) {
+  const adults = String(Math.max(1, options.travellers));
+  const rooms = String(Math.max(1, options.units));
+  return { adults, rooms, children: "0" };
+}
+
+function bookingComSearchUrl(options: {
   name: string;
   area: string;
   checkIn: string;
@@ -116,13 +139,60 @@ function bookingComUrl(options: {
   travellers: number;
   units: number;
 }) {
+  const { adults, rooms, children } = occupancy(options);
   return withTripParams("https://www.booking.com/searchresults.html", {
-    ss: searchQuery([options.name, options.area]),
+    ss: options.name,
+    ssne: options.name,
+    ssne_untouched: options.name,
+    dest_type: "hotel",
     checkin: options.checkIn,
     checkout: options.checkOut,
-    group_adults: String(options.travellers),
-    no_rooms: String(Math.max(1, options.units)),
+    group_adults: adults,
+    group_children: children,
+    no_rooms: rooms,
     selected_currency: "ZAR",
+    sb_travel_purpose: "leisure",
+  });
+}
+
+function bookingComHotelUrl(
+  path: string,
+  options: {
+    checkIn: string;
+    checkOut: string;
+    travellers: number;
+    units: number;
+  },
+) {
+  const { adults, rooms, children } = occupancy(options);
+  return withTripParams(`https://www.booking.com/hotel/${path}.html`, {
+    checkin: options.checkIn,
+    checkout: options.checkOut,
+    group_adults: adults,
+    group_children: children,
+    no_rooms: rooms,
+    req_adults: adults,
+    req_children: children,
+    req_rooms: rooms,
+    selected_currency: "ZAR",
+  });
+}
+
+function bookingComStayUrl(stay: StayHandoffInput, trip: TripHandoff) {
+  const path = stay.id ? BOOKING_COM_HOTEL_PATHS[stay.id] : undefined;
+  const dates = {
+    checkIn: trip.checkIn,
+    checkOut: trip.checkOut,
+    travellers: trip.travellers,
+    units: trip.units,
+  };
+  if (path) {
+    return bookingComHotelUrl(path, dates);
+  }
+  return bookingComSearchUrl({
+    name: stay.name,
+    area: stay.area,
+    ...dates,
   });
 }
 
@@ -134,15 +204,18 @@ function airbnbUrl(options: {
   travellers: number;
 }) {
   const query = searchQuery([options.name, options.area]);
-  return withTripParams(
-    `https://www.airbnb.com/s/${encodeURIComponent(query)}/homes`,
-    {
-      query,
-      checkin: options.checkIn,
-      checkout: options.checkOut,
-      adults: String(options.travellers),
-    },
-  );
+  const slug = encodeURIComponent(query.replace(/\s+/g, "-"));
+  return withTripParams(`https://www.airbnb.com/s/${slug}/homes`, {
+    query,
+    checkin: options.checkIn,
+    checkout: options.checkOut,
+    check_in: options.checkIn,
+    check_out: options.checkOut,
+    adults: String(Math.max(1, options.travellers)),
+    date_picker_type: "calendar",
+    search_type: "search_query",
+    source: "structured_search_input_header",
+  });
 }
 
 function lekkeSlaapUrl(options: {
@@ -152,11 +225,18 @@ function lekkeSlaapUrl(options: {
   checkOut: string;
   travellers: number;
 }) {
-  return withTripParams("https://www.lekkeslaap.co.za/accommodation/search", {
-    term: searchQuery([options.name, options.area]),
+  const query = searchQuery([options.name, options.area]);
+  const guests = String(Math.max(1, options.travellers));
+  return withTripParams("https://www.lekkeslaap.co.za/accommodation", {
+    q: query,
+    term: query,
+    check_in: options.checkIn,
+    check_out: options.checkOut,
     arrival: options.checkIn,
     departure: options.checkOut,
-    adults: String(options.travellers),
+    guests,
+    adults: guests,
+    number_of_guests: guests,
   });
 }
 
@@ -171,7 +251,9 @@ function safariNowUrl(options: {
     q: searchQuery([options.name, options.area]),
     start: options.checkIn,
     end: options.checkOut,
-    adults: String(options.travellers),
+    arrival: options.checkIn,
+    departure: options.checkOut,
+    adults: String(Math.max(1, options.travellers)),
   });
 }
 
@@ -183,12 +265,18 @@ function marriottUrl(options: {
   travellers: number;
   units: number;
 }) {
+  const rooms = String(Math.max(1, options.units));
+  const adults = String(Math.max(1, options.travellers));
   return withTripParams("https://www.marriott.com/search/findHotels.mi", {
     "destinationAddress.destination": searchQuery([options.name, options.area]),
     fromDate: usDate(options.checkIn),
     toDate: usDate(options.checkOut),
-    roomCount: String(Math.max(1, options.units)),
-    numAdultsPerRoom: String(Math.max(1, options.travellers)),
+    fromDateFlexible: "false",
+    toDateFlexible: "false",
+    isSearch: "true",
+    roomCount: rooms,
+    numAdultsPerRoom: adults,
+    childrenCount: "0",
   });
 }
 
@@ -204,42 +292,16 @@ function radissonUrl(options: {
     "https://www.radissonhotels.com/en-us/booking/search",
     {
       search: searchQuery([options.name, options.area]),
+      destination: searchQuery([options.name, options.area]),
       checkInDate: options.checkIn,
       checkOutDate: options.checkOut,
-      adults: String(options.travellers),
+      startDate: options.checkIn,
+      endDate: options.checkOut,
+      adults: String(Math.max(1, options.travellers)),
       rooms: String(Math.max(1, options.units)),
+      children: "0",
     },
   );
-}
-
-function southernSunUrl(options: {
-  name: string;
-  area: string;
-  checkIn: string;
-  checkOut: string;
-  travellers: number;
-}) {
-  return withTripParams("https://www.southernsun.com/search", {
-    q: searchQuery([options.name, options.area]),
-    checkIn: options.checkIn,
-    checkOut: options.checkOut,
-    adults: String(options.travellers),
-  });
-}
-
-function sunInternationalUrl(options: {
-  name: string;
-  area: string;
-  checkIn: string;
-  checkOut: string;
-  travellers: number;
-}) {
-  return withTripParams("https://www.suninternational.com/search/", {
-    q: searchQuery([options.name, options.area]),
-    checkin: options.checkIn,
-    checkout: options.checkOut,
-    adults: String(options.travellers),
-  });
 }
 
 function sanparksUrl(options: {
@@ -252,7 +314,10 @@ function sanparksUrl(options: {
     q: options.name,
     arrival: options.checkIn,
     departure: options.checkOut,
-    guests: String(options.travellers),
+    startDate: options.checkIn,
+    endDate: options.checkOut,
+    guests: String(Math.max(1, options.travellers)),
+    adults: String(Math.max(1, options.travellers)),
   });
 }
 
@@ -266,26 +331,9 @@ function capeNatureUrl(options: {
     q: options.name,
     startDate: options.checkIn,
     endDate: options.checkOut,
-    adults: String(options.travellers),
-  });
-}
-
-function officialStayUrl(
-  site: string,
-  options: {
-    name: string;
-    checkIn: string;
-    checkOut: string;
-    travellers: number;
-    units: number;
-  },
-) {
-  return withTripParams(site, {
-    q: options.name,
-    checkin: options.checkIn,
-    checkout: options.checkOut,
-    adults: String(options.travellers),
-    rooms: String(Math.max(1, options.units)),
+    arrival: options.checkIn,
+    departure: options.checkOut,
+    adults: String(Math.max(1, options.travellers)),
   });
 }
 
@@ -308,12 +356,7 @@ function linkHandoff(
 }
 
 export function stayHandoff(
-  stay: {
-    name: string;
-    company: string;
-    area: string;
-    kind: StayKind;
-  },
+  stay: StayHandoffInput,
   trip: TripHandoff,
 ): BookingHandoff {
   const adults = Math.max(1, trip.travellers);
@@ -373,88 +416,6 @@ export function stayHandoff(
       carries,
     );
   }
-  if (
-    companyHas(stay.company, "Southern Sun") ||
-    companyHas(stay.company, "Tsogo")
-  ) {
-    return linkHandoff(
-      "Southern Sun",
-      "Book on Southern Sun",
-      southernSunUrl(args),
-      carries,
-    );
-  }
-  if (
-    companyHas(stay.company, "Sun International") ||
-    companyHas(stay.company, "Suncoast")
-  ) {
-    return linkHandoff(
-      "Sun International",
-      "Book on Sun International",
-      sunInternationalUrl(args),
-      carries,
-    );
-  }
-  if (companyHas(stay.company, "Four Seasons")) {
-    return linkHandoff(
-      "Four Seasons",
-      "Book on Four Seasons",
-      officialStayUrl("https://www.fourseasons.com/search/", args),
-      carries,
-    );
-  }
-  if (
-    companyHas(stay.company, "Kerzner") ||
-    companyHas(stay.company, "One&Only")
-  ) {
-    return linkHandoff(
-      "One&Only",
-      "Book on One&Only",
-      officialStayUrl("https://www.oneandonlyresorts.com/", args),
-      carries,
-    );
-  }
-  if (companyHas(stay.company, "Royal Portfolio")) {
-    return linkHandoff(
-      "The Royal Portfolio",
-      "Book with The Royal Portfolio",
-      officialStayUrl("https://www.theroyalportfolio.com/", args),
-      carries,
-    );
-  }
-  if (companyHas(stay.company, "Tintswalo")) {
-    return linkHandoff(
-      "Tintswalo",
-      "Book with Tintswalo",
-      officialStayUrl("https://www.tintswalo.com/", args),
-      carries,
-    );
-  }
-  if (companyHas(stay.company, "Liz McGrath")) {
-    return linkHandoff(
-      "The Collection",
-      "Book with The Collection",
-      officialStayUrl("https://www.collectionmcgrath.com/", args),
-      carries,
-    );
-  }
-  if (companyHas(stay.company, "Premier Hotels")) {
-    return linkHandoff(
-      "Premier Hotels",
-      "Book with Premier Hotels",
-      officialStayUrl("https://www.premierhotels.co.za/", args),
-      carries,
-    );
-  }
-  if (companyHas(stay.company, "The Capital")) {
-    return linkHandoff(
-      "The Capital",
-      "Book with The Capital",
-      officialStayUrl("https://thecapital.co.za/", args),
-      carries,
-    );
-  }
-
   if (stay.kind === "house" || stay.kind === "apartment") {
     return linkHandoff("Airbnb", "Book on Airbnb", airbnbUrl(args), carries);
   }
@@ -466,7 +427,7 @@ export function stayHandoff(
       carries,
     );
   }
-  if (stay.kind === "lodge") {
+  if (stay.kind === "lodge" && !(stay.id && BOOKING_COM_HOTEL_PATHS[stay.id])) {
     return linkHandoff(
       "SafariNow",
       "Book on SafariNow",
@@ -474,16 +435,13 @@ export function stayHandoff(
       carries,
     );
   }
-  if (stay.kind === "hotel") {
-    return linkHandoff(
-      "Booking.com",
-      "Book on Booking.com",
-      bookingComUrl(args),
-      carries,
-    );
-  }
 
-  return inPerson(stay.company, carries);
+  return linkHandoff(
+    "Booking.com",
+    "Book on Booking.com",
+    bookingComStayUrl(stay, { ...trip, travellers: adults, units }),
+    carries,
+  );
 }
 
 export function activityHandoff(
@@ -509,13 +467,17 @@ export function activityHandoff(
     return inPerson(place.company, carries);
   }
 
+  const guests = String(Math.max(1, trip.travellers));
   return linkHandoff(
     place.company,
     `Buy tickets`,
     withTripParams(site, {
       date: trip.visitDate,
-      adults: String(Math.max(1, trip.travellers)),
-      quantity: String(Math.max(1, trip.travellers)),
+      startDate: trip.visitDate,
+      visit_date: trip.visitDate,
+      adults: guests,
+      quantity: guests,
+      guests,
     }),
     carries,
   );

@@ -3,17 +3,21 @@ import { listTrips } from "@backend/server/trips";
 import { TripList } from "@/components/trip/trip-list";
 import { verifySession } from "@/lib/dal";
 
+export const metadata = { title: "Trips" };
+
 export default async function Page() {
   const { userId } = await verifySession();
   const trips = await listTrips(userId);
 
   return (
-    <section className="space-y-6">
-      <div className="flex items-center justify-between gap-4">
+    <section className="space-y-10">
+      <div className="flex flex-wrap items-end justify-between gap-6">
         <div>
-          <h1 className="text-2xl font-semibold">Trips</h1>
-          <p className="text-sm text-muted">
-            Your planned trips, with dates and travellers.
+          <p className="kicker">Your road</p>
+          <h1 className="mt-2 font-display text-4xl sm:text-5xl">Trips</h1>
+          <p className="mt-2 max-w-md text-muted">
+            Each one is a stay, a few days, and the places you will actually
+            walk.
           </p>
         </div>
         <Link

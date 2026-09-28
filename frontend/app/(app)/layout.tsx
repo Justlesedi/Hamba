@@ -1,4 +1,5 @@
-import { Header } from "@/components/layout/header";
+import { SiteFooter } from "@/components/layout/site-footer";
+import { SiteHeader } from "@/components/layout/site-header";
 import { getCurrentUser } from "@/lib/dal";
 
 export default async function Layout({
@@ -9,9 +10,10 @@ export default async function Layout({
   const user = await getCurrentUser();
 
   return (
-    <div className="min-h-full">
-      <Header user={user} />
-      <div className="mx-auto max-w-5xl px-6 py-8">{children}</div>
+    <div className="flex min-h-full flex-col">
+      <SiteHeader user={user} />
+      <div className="mx-auto w-full max-w-6xl flex-1 px-6 py-10">{children}</div>
+      <SiteFooter />
     </div>
   );
 }

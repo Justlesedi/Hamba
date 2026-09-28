@@ -57,8 +57,9 @@ export default async function Page({
             Bookings
           </Link>
         </p>
-        <h1 className="mt-2 text-2xl font-semibold">Book {trip.title}</h1>
-        <p className="text-sm text-muted">{trip.destination}</p>
+        <p className="kicker mt-6">Handoff</p>
+        <h1 className="mt-2 font-display text-4xl">Book {trip.title}</h1>
+        <p className="text-muted">{trip.destination}</p>
         <p className="mt-2 text-sm text-muted">
           Hamba does not take payment. Your dates and travellers go to that
           place’s booking site. If it has no site, you travel there.

@@ -1,11 +1,23 @@
+import { SceneFilm } from "@/components/experience/scene-film";
+import { HERO_FILM } from "@/lib/media";
+
 export default function Layout({
   children,
 }: {
   children: React.ReactNode;
 }) {
   return (
-    <main className="mx-auto flex min-h-full max-w-md flex-col justify-center px-6 py-16">
-      {children}
+    <main className="grid min-h-full lg:grid-cols-2">
+      <div className="relative hidden min-h-[40vh] overflow-hidden bg-dusk lg:block">
+        <SceneFilm src={HERO_FILM.src} poster={HERO_FILM.poster} />
+        <div className="absolute inset-0 bg-gradient-to-t from-dusk/80 via-dusk/20 to-transparent" />
+        <p className="absolute bottom-10 left-10 max-w-xs font-display text-4xl text-sand">
+          The trip begins before the booking.
+        </p>
+      </div>
+      <div className="flex flex-col justify-center bg-background px-6 py-16 sm:px-12">
+        <div className="mx-auto w-full max-w-md">{children}</div>
+      </div>
     </main>
   );
 }

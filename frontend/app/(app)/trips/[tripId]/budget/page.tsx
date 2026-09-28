@@ -28,9 +28,11 @@ export default async function Page({
   return (
     <section className="space-y-6">
       <div>
-        <h1 className="text-2xl font-semibold">Budget</h1>
-        <p className="text-sm text-muted">
-          Costs for {trip.destination}. Book stays and activities separately.
+        <p className="kicker">The forecast</p>
+        <h1 className="mt-2 font-display text-4xl">Budget</h1>
+        <p className="mt-1 text-muted">
+          Costs for {trip.destination}. This is a picture of the trip, not a
+          bill.
         </p>
       </div>
       <BudgetSummary

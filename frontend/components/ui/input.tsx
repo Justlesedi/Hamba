@@ -13,7 +13,7 @@ export function Input({ label, error, id, className = "", ...props }: InputProps
       <span className="text-sm font-medium">{label}</span>
       <input
         id={inputId}
-        className={`w-full rounded-xl border border-border bg-card px-3 py-2.5 text-sm outline-none focus:border-accent ${className}`}
+        className={`w-full rounded-2xl border border-border bg-card px-3 py-3 text-sm outline-none transition focus:border-accent ${className}`}
         {...props}
       />
       {error ? <span className="text-sm text-accent">{error}</span> : null}

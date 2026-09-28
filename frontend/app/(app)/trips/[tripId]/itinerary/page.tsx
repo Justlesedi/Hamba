@@ -27,8 +27,8 @@ export default async function Page({
   if (!initialCenter) {
     return (
       <section className="space-y-4">
-        <h1 className="text-2xl font-semibold">Plan</h1>
-        <p className="text-sm text-muted">
+        <h1 className="font-display text-4xl">Plan</h1>
+        <p className="text-muted">
           We could not place {trip.destination} on the map yet. Try a city name,
           such as Mbombela or Bloemfontein.
         </p>
@@ -54,8 +54,9 @@ export default async function Page({
   return (
     <section className="space-y-6">
       <div>
-        <h1 className="text-2xl font-semibold">Plan</h1>
-        <p className="text-sm text-muted">{trip.destination}</p>
+        <p className="kicker">The neighbourhood</p>
+        <h1 className="mt-2 font-display text-4xl">Plan</h1>
+        <p className="mt-1 text-muted">{trip.destination}</p>
       </div>
       <ItineraryExplorer
         tripId={trip.id}

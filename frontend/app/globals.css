@@ -1,20 +1,23 @@
 @import "tailwindcss";
 
 :root {
-  --background: #f4efe6;
-  --foreground: #1c1917;
-  --muted: #6b645c;
-  --card: #fffcf7;
-  --border: #e4d9c8;
-  --accent: #c45c26;
-  --accent-hover: #a94b1d;
-  --food: #2f6f5e;
+  --background: #efe4d0;
+  --foreground: #1c1610;
+  --muted: #6d6256;
+  --card: #fbf6ec;
+  --border: #e0d2bc;
+  --accent: #b85c2a;
+  --accent-hover: #9a4a22;
+  --food: #3d6b56;
   --stay: #3d5a80;
-  --open: #15803d;
+  --open: #2f6a45;
   --closed: #b91c1c;
-  --busy-empty: #15803d;
-  --busy-moderate: #ca8a04;
+  --busy-empty: #2f6a45;
+  --busy-moderate: #c4922a;
   --busy-full: #b91c1c;
+  --dusk: #1a1612;
+  --sand: #f4ead8;
+  --gold: #c4a574;
 }
 
 @theme inline {
@@ -25,14 +28,78 @@
   --color-border: var(--border);
   --color-accent: var(--accent);
   --color-accent-hover: var(--accent-hover);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-dusk: var(--dusk);
+  --color-sand: var(--sand);
+  --color-gold: var(--gold);
+  --font-sans: var(--font-figtree);
+  --font-display: var(--font-fraunces);
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: var(--font-geist-sans), Arial, Helvetica, sans-serif;
+  font-family: var(--font-figtree), "Helvetica Neue", Arial, sans-serif;
+}
+
+.font-display,
+h1,
+h2 {
+  font-family: var(--font-fraunces), Georgia, "Times New Roman", serif;
+  font-optical-sizing: auto;
+}
+
+.kicker {
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+
+.shadow-lift {
+  box-shadow:
+    0 24px 50px rgb(28 22 16 / 0.16),
+    0 2px 0 rgb(255 255 255 / 0.35) inset;
+}
+
+@keyframes drift {
+  from {
+    transform: scale(1.04) translate3d(0, 0, 0);
+  }
+  to {
+    transform: scale(1.12) translate3d(-1.5%, -1%, 0);
+  }
+}
+
+.motion-safe\:animate-drift {
+  animation: none;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .motion-safe\:animate-drift {
+    animation: drift 28s ease-in-out alternate infinite;
+  }
+}
+
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.rise {
+  animation: rise 0.8s ease both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .rise {
+    animation: none;
+  }
 }
 
 .hamba-pin {

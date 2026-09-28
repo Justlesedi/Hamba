@@ -21,7 +21,7 @@ export function Button({
   return (
     <button
       type={type}
-      className={`inline-flex items-center justify-center rounded-full px-5 py-2.5 text-sm font-medium ${styles[variant]} ${className}`}
+      className={`inline-flex items-center justify-center rounded-full px-5 py-2.5 text-sm font-medium tracking-wide ${styles[variant]} ${className}`}
       {...props}
     />
   );

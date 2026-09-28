@@ -9,10 +9,12 @@ export function TripNav({ tripId }: { tripId: string }) {
   const plan = `/trips/${tripId}/itinerary`;
   const budget = `/trips/${tripId}/budget`;
 
+  const book = `/bookings/trip/${tripId}`;
   const links = [
     { href: overview, label: "Overview", current: pathname === overview },
     { href: plan, label: "Plan", current: pathname === plan },
     { href: budget, label: "Budget", current: pathname === budget },
+    { href: book, label: "Book", current: pathname.startsWith(book) },
   ];
 
   return (
