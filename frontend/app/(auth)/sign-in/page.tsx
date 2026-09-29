@@ -1,16 +1,30 @@
 import Link from "next/link";
 import { SignInForm } from "@/components/auth/sign-in-form";
+import { BrandMark } from "@/components/layout/brand-mark";
 
 export const metadata = { title: "Sign in" };
 
-export default function Page() {
+export default async function Page({
+  searchParams,
+}: {
+  searchParams: Promise<{ account?: string }>;
+}) {
+  const { account } = await searchParams;
+  const existingAccount = account === "exists";
+
   return (
     <div>
-      <p className="font-display text-3xl">Hamba</p>
+      <BrandMark href="/" size="auth" />
       <h1 className="mt-6 font-display text-4xl">Welcome back.</h1>
-      <p className="mt-2 mb-8 text-muted">
-        Continue the trip you already started.
-      </p>
+      {existingAccount ? (
+        <p className="mt-2 mb-8 text-accent">
+          An account with this email already exists. Sign in to continue.
+        </p>
+      ) : (
+        <p className="mt-2 mb-8 text-muted">
+          Continue the trip you already started.
+        </p>
+      )}
       <SignInForm />
       <p className="mt-6 text-sm text-muted">
         New here?{" "}

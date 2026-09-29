@@ -14,7 +14,7 @@ export default function Page() {
       <section className="space-y-3">
         <h2 className="text-2xl">Who we are</h2>
         <p>
-          Hamba is a Southern African travel planner operated as an early
+          Hamba is a South African travel planner operated as an early
           product. This policy describes how we handle information when you
           create an account and use the site.
         </p>

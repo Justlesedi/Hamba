@@ -24,7 +24,7 @@ export default async function Page() {
         </div>
         <div className="relative mx-auto flex min-h-[92vh] max-w-6xl flex-col justify-between px-6 pb-16 pt-28">
           <div className="rise max-w-xl">
-            <p className="kicker text-gold">Southern Africa</p>
+            <p className="kicker text-gold">South Africa</p>
             <h1 className="mt-4 font-display text-5xl leading-[1.05] text-balance sm:text-7xl">
               Go where the land already knows the way.
             </h1>

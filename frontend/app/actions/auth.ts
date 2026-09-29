@@ -2,6 +2,7 @@
 
 import { redirect } from "next/navigation";
 import { AuthError, authenticateUser, registerUser } from "@backend/server/users";
+import { ACCOUNT_EXISTS_LOGIN_PATH } from "@backend/lib/security";
 import {
   signInSchema,
   signUpSchema,
@@ -29,7 +30,7 @@ export async function signUp(
     await createSession(user.id);
   } catch (error) {
     if (error instanceof AuthError && error.code === "EMAIL_TAKEN") {
-      return { errors: { email: [error.message] } };
+      redirect(ACCOUNT_EXISTS_LOGIN_PATH);
     }
     return { message: "Could not create your account. Please try again." };
   }

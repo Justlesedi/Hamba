@@ -59,7 +59,7 @@ export default function Page() {
       <section className="space-y-3">
         <h2 className="text-2xl">South African law</h2>
         <p>
-          These terms are intended for use with a product focused on Southern
+          These terms are intended for use with a product focused on South
           African travel. If a court finds one clause unenforceable, the rest
           still stands.
         </p>

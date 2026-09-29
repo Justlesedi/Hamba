@@ -38,7 +38,7 @@ export default async function Page() {
           <p>
             In isiXhosa and isiZulu it is a verb and a blessing. Leave the yard.
             Take the road. We built a place that holds the first half of a
-            Southern African trip: where you sleep, what you do, what it might
+            South African trip: where you sleep, what you do, what it might
             cost in rand.
           </p>
           <p>
@@ -66,7 +66,7 @@ export default async function Page() {
 
         <Zigzag
           kicker="The land"
-          title="Southern Africa, at the scale of a weekend or a season."
+          title="South Africa, at the scale of a weekend or a season."
           image={SCENES.wine}
         >
           <p>

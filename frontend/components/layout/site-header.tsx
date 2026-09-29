@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { signOut } from "@/app/actions/auth";
+import { BrandMark } from "@/components/layout/brand-mark";
 import { Button } from "@/components/ui/button";
 import type { PublicUser } from "@backend/types/user";
 
@@ -28,15 +29,8 @@ export function SiteHeader({
           : "relative z-20 border-b border-border/80 bg-card/80 backdrop-blur-md"
       }
     >
-      <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-6 py-5">
-        <Link
-          href={user ? "/trips" : "/"}
-          className={`font-display text-2xl tracking-tight ${
-            onFilm ? "text-white" : "text-foreground"
-          }`}
-        >
-          Hamba
-        </Link>
+      <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-6 py-4">
+        <BrandMark href={user ? "/trips" : "/"} tone={tone} />
         <nav className="flex items-center gap-5 text-sm">
           {user ? (
             <>

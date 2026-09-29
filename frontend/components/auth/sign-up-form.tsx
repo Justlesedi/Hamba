@@ -4,6 +4,7 @@ import { useActionState } from "react";
 import { signUp } from "@/app/actions/auth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { PASSWORD_RULE } from "@backend/lib/security";
 
 export function SignUpForm() {
   const [state, action, pending] = useActionState(signUp, undefined);
@@ -28,6 +29,8 @@ export function SignUpForm() {
         name="password"
         type="password"
         autoComplete="new-password"
+        minLength={6}
+        hint={PASSWORD_RULE}
         error={state?.errors?.password?.[0]}
       />
       {state?.message ? (

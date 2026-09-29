@@ -1,14 +1,24 @@
 import { z } from "zod";
+import { isSecurePassword, PASSWORD_RULE } from "./security";
+
+export const passwordSchema = z
+  .string()
+  .min(6, PASSWORD_RULE)
+  .refine(isSecurePassword, PASSWORD_RULE);
 
 export const signUpSchema = z.object({
   name: z.string().trim().min(2, "Name must be at least 2 characters."),
   email: z.string().trim().email("Enter a valid email address."),
-  password: z.string().min(8, "Password must be at least 8 characters."),
+  password: passwordSchema,
 });
 
 export const signInSchema = z.object({
   email: z.string().trim().email("Enter a valid email address."),
   password: z.string().min(1, "Password is required."),
+});
+
+export const emailCheckSchema = z.object({
+  email: z.string().trim().email("Enter a valid email address."),
 });
 
 export const nearbyActivitiesSchema = z.object({

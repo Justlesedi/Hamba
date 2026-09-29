@@ -3,9 +3,17 @@ import type { InputHTMLAttributes } from "react";
 type InputProps = InputHTMLAttributes<HTMLInputElement> & {
   label: string;
   error?: string;
+  hint?: string;
 };
 
-export function Input({ label, error, id, className = "", ...props }: InputProps) {
+export function Input({
+  label,
+  error,
+  hint,
+  id,
+  className = "",
+  ...props
+}: InputProps) {
   const inputId = id ?? props.name;
 
   return (
@@ -16,7 +24,11 @@ export function Input({ label, error, id, className = "", ...props }: InputProps
         className={`w-full rounded-2xl border border-border bg-card px-3 py-3 text-sm outline-none transition focus:border-accent ${className}`}
         {...props}
       />
-      {error ? <span className="text-sm text-accent">{error}</span> : null}
+      {error ? (
+        <span className="text-sm text-accent">{error}</span>
+      ) : hint ? (
+        <span className="text-sm text-muted">{hint}</span>
+      ) : null}
     </label>
   );
 }

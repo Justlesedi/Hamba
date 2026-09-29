@@ -10,7 +10,7 @@ export const SCENES = {
   },
   safari: {
     src: "/media/safari.jpg",
-    alt: "Elephants on Southern African savanna",
+    alt: "Elephants on a South African savanna",
   },
   wine: {
     src: "/media/stellenbosch.jpg",
@@ -30,7 +30,7 @@ export const SCENES = {
   },
   lion: {
     src: "/media/african-lion.jpg",
-    alt: "A lion in Southern African grassland",
+    alt: "A lion in South African grassland",
   },
 } as const;
 

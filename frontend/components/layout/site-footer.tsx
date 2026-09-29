@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { BrandMark } from "@/components/layout/brand-mark";
 import { MEDIA_CREDIT } from "@/lib/media";
 
 const legal = [
@@ -21,13 +22,9 @@ export function SiteFooter({ tone = "sand" }: { tone?: "sand" | "dusk" }) {
     >
       <div className="mx-auto flex max-w-6xl flex-col gap-8 px-6 py-10 sm:flex-row sm:items-end sm:justify-between">
         <div className="max-w-sm">
-          <p
-            className={`font-display text-2xl ${dusk ? "text-sand" : "text-foreground"}`}
-          >
-            Hamba
-          </p>
-          <p className="mt-2 text-sm leading-relaxed">
-            Go. Plan a Southern African trip around a real stay, see the spend in
+          <BrandMark href="/" tone={dusk ? "on-film" : "light"} size="footer" />
+          <p className="mt-3 text-sm leading-relaxed">
+            Go. Plan a South African trip around a real stay, see the spend in
             rand, then book where the place actually takes the money.
           </p>
         </div>
