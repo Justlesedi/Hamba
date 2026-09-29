@@ -16,7 +16,12 @@ import {
 import { monthEnd, monthStart } from "@backend/lib/calendar/dates";
 import { ticketChannelLabel } from "@backend/lib/activities/tickets";
 import type { NearbyActivity } from "@backend/types/activity";
-import { stayKindLabel, stayLayoutLabel, type QuotedStay } from "@backend/types/stay";
+import {
+  stayKindLabel,
+  stayLayoutLabel,
+  stayUnitNoun,
+  type QuotedStay,
+} from "@backend/types/stay";
 import { BusyBadge } from "@/components/calendar/busy-badge";
 import { BusyCalendar } from "@/components/calendar/busy-calendar";
 import { useBusyDays } from "@/components/calendar/use-busy-days";
@@ -470,8 +475,8 @@ export function ItineraryExplorer({
         <div className="max-w-xl text-sm text-muted">
           <p>
             {stayHub
-              ? `Activities and food are around ${stayHub.name} in ${stayHub.area}.`
-              : `Confirm a stay so activities and food use that area in ${destination}.`}
+              ? `Things to do and eat sit around ${stayHub.name} in ${stayHub.area}.`
+              : `Choose a stay in ${destination}, and nearby places will gather around it.`}
           </p>
         </div>
         <Button type="button" variant="secondary" onClick={useMyLocation}>
@@ -648,12 +653,11 @@ function ChosenPlan({
           <div className="mt-2">
             <p className="font-medium">{stay.name}</p>
             <p className="mt-1 text-sm text-muted">
-              {stayKindLabel(stay.kind)} ·{" "}
-              {stay.kind === "house"
-                ? unitCount > 1
-                  ? `${unitCount} houses · ${stayLayoutLabel(stay)} each`
-                  : stayLayoutLabel(stay)
-                : `${unitCount} ${unitCount === 1 ? "room" : "rooms"} · ${stayLayoutLabel(stay)}`}{" "}
+              {stayKindLabel(stay.kind)} · {unitCount}{" "}
+              {stayUnitNoun(stay.kind, unitCount)}
+              {stay.kind === "house" && unitCount > 1
+                ? ` · ${stayLayoutLabel(stay)} each`
+                : ` · ${stayLayoutLabel(stay)}`}{" "}
               · {formatZar(stay.nightlyCents)} per night
             </p>
             <p className="mt-1 text-sm font-medium">
@@ -768,7 +772,7 @@ function ChosenPlan({
       {stay && pickedToAdd.length === 0 ? (
         <p className="pt-1">
           <Link
-            href={`/bookings/trip/${tripId}`}
+            href={`/trips/${tripId}/budget`}
             className="inline-flex items-center justify-center rounded-full bg-accent px-5 py-2.5 text-sm font-medium text-white hover:bg-accent-hover"
           >
             Advance
@@ -776,11 +780,11 @@ function ChosenPlan({
         </p>
       ) : stay ? (
         <p className="text-sm text-muted">
-          Confirm the ticked places first, then Advance to Bookings.
+          Confirm the ticked places first, then Advance to Budget.
         </p>
       ) : (
         <p className="text-sm text-muted">
-          Confirm a stay first, then Advance to Bookings.
+          Confirm a stay first, then Advance to Budget.
         </p>
       )}
     </div>
@@ -823,6 +827,10 @@ function StayList({
   busyFor: (id: string) => BusyLevel | null;
 }) {
   const [showBusy, setShowBusy] = useState(false);
+  const activeStay =
+    stays.find((stay) => stay.id === chosenStayId) ??
+    stays.find((stay) => stay.id === selectedId) ??
+    null;
 
   useEffect(() => {
     setShowBusy(true);
@@ -841,6 +849,7 @@ function StayList({
               <StayUnitsSelect
                 travellers={travellers}
                 value={unitCount}
+                kind={activeStay?.kind ?? null}
                 onChange={onUnitsChange}
                 submitOnChange
               />
@@ -849,6 +858,7 @@ function StayList({
             <StayUnitsSelect
               travellers={travellers}
               value={unitCount}
+              kind={activeStay?.kind ?? null}
               onChange={onUnitsChange}
             />
           )}

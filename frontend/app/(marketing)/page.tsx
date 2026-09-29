@@ -23,17 +23,21 @@ export default async function Page() {
           <div className="absolute inset-0 bg-gradient-to-br from-dusk/75 via-dusk/35 to-dusk/20" />
         </div>
         <div className="relative mx-auto flex min-h-[92vh] max-w-6xl flex-col justify-between px-6 pb-16 pt-28">
-          <div className="rise max-w-xl">
+          <div className="rise max-w-5xl">
             <p className="kicker text-gold">South Africa</p>
-            <h1 className="mt-4 font-display text-5xl leading-[1.05] text-balance sm:text-7xl">
-              Go where the land already knows the way.
-            </h1>
+            <div className="mt-4 flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between sm:gap-10 lg:gap-16">
+              <h1 className="max-w-xl font-display text-5xl leading-[1.05] text-balance sm:text-7xl">
+                Go where the land already knows the way.
+              </h1>
+              <p className="max-w-xs text-base leading-relaxed text-sand/80 lg:pb-3">
+                Hamba is isiXhosa and isiZulu for go — a word that already
+                belongs to this land.
+              </p>
+            </div>
           </div>
           <div className="rise mt-10 flex flex-col items-end gap-6 sm:mt-0 sm:flex-row sm:items-end sm:justify-between">
             <p className="max-w-md self-start text-base leading-relaxed text-sand/80">
-              Hamba is the isiXhosa and isiZulu word for go. Plan around a stay,
-              watch the rand, then leave us for the door that actually takes
-              payment.
+              Choose a stay, see the rand, then book with the place itself.
             </p>
             <Link
               href={startHref}
@@ -48,27 +52,25 @@ export default async function Page() {
       <div className="mx-auto max-w-6xl space-y-28 px-6 py-24">
         <Zigzag
           kicker="01 · Plan"
-          title="Choose a stay. The rest of the day gathers around it."
+          title="Choose a stay. The day grows around it."
           image={SCENES.cape}
         >
           <p>
-            The map is not a catalogue. It is a neighbourhood. Confirm a hotel,
-            house, or camp, and activities and food follow that ground.
+            Confirm a hotel, house, or camp, and nearby things to do and eat
+            appear around it. Closed places stay off the plan.
           </p>
-          <p>Closed places stay off the plan. Ticket rules stay honest.</p>
         </Zigzag>
 
         <Zigzag
           reverse
           kicker="02 · Budget"
-          title="See the spend before anyone asks for a card."
+          title="See the spend before you pay."
           image={SCENES.wine}
         >
           <p>
             The forecast is in rand, from the stay and places you already chose.
             It is a picture of the trip, not a bill.
           </p>
-          <p>Quiet days and full days colour the calendar. They do not lock a door.</p>
         </Zigzag>
 
         <Zigzag
@@ -77,10 +79,10 @@ export default async function Page() {
           image={SCENES.safari}
         >
           <p>
-            Hamba does not take money. Your dates and travellers go to Tintswalo,
-            SANParks, Booking.com, or the gate you have to walk through yourself.
+            We do not take your money. Your dates and guests go to the lodge,
+            the park, or Booking.com. If there is no website, you go there
+            yourself.
           </p>
-          <p>The last step is theirs. The first ones are yours, here.</p>
         </Zigzag>
       </div>
 
@@ -89,7 +91,7 @@ export default async function Page() {
           <div className="max-w-lg">
             <p className="kicker text-gold">The road</p>
             <h2 className="mt-3 font-display text-4xl sm:text-5xl">
-              A trip is a story with dates. Start writing it.
+              Your dates are waiting. Start the trip.
             </h2>
           </div>
           <Link

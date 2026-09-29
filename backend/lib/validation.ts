@@ -49,7 +49,7 @@ export const createTripSchema = z
     endDate: z.string().min(1, "Return date is required."),
     travellers: z.preprocess(
       (value) => (value == null ? value : String(value).replace(/\D/g, "")),
-      z.string().regex(/^[1-9]\d*$/, "Travellers must be a whole number.").transform(Number),
+      z.string().regex(/^[1-9]\d*$/, "Guests must be a whole number.").transform(Number),
     ),
   })
   .refine((data) => data.endDate >= data.startDate, {

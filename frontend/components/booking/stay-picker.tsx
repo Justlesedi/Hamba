@@ -2,7 +2,7 @@
 
 import { formatZar } from "@backend/lib/money";
 import { formatTravelAway } from "@backend/lib/geo";
-import { stayKindLabel, stayLayoutLabel, type QuotedStay } from "@backend/types/stay";
+import { stayKindLabel, stayLayoutLabel, stayUnitNoun, type QuotedStay } from "@backend/types/stay";
 import { OpenBadge } from "@/components/plan/open-badge";
 import { Button } from "@/components/ui/button";
 
@@ -42,7 +42,7 @@ export function StayPicker({
               <p className="mt-1 text-sm text-muted">
                 {stayKindLabel(stay.kind)} · {stay.area} ·{" "}
                 {formatTravelAway(stay.distanceKm)} · {stay.units}{" "}
-                {stay.units === 1 ? "unit" : "units"} · {stay.nights}{" "}
+                {stayUnitNoun(stay.kind, stay.units)} · {stay.nights}{" "}
                 {stay.nights === 1 ? "night" : "nights"} · {stayLayoutLabel(stay)}
               </p>
               <p className="mt-1 text-sm font-medium">

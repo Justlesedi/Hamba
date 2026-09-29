@@ -16,8 +16,8 @@ export function BookingList({ bookings }: { bookings: Booking[] }) {
   if (bookings.length === 0) {
     return (
       <p className="text-sm text-muted">
-        No bookings saved on Hamba. Confirm a stay on Plan, then book on that
-        place’s site.
+        No bookings saved yet. Confirm a stay on Plan, check Budget, then book
+        on that place’s site.
       </p>
     );
   }

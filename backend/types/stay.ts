@@ -27,6 +27,20 @@ export function stayKindLabel(kind: StayKind) {
   return "Hotel";
 }
 
+export function stayUnitNoun(
+  kind: StayKind | null | undefined,
+  count = 1,
+) {
+  if (kind === "house") {
+    return count === 1 ? "house" : "houses";
+  }
+  return count === 1 ? "room" : "rooms";
+}
+
+export function stayUnitHeading(kind: StayKind | null | undefined) {
+  return kind === "house" ? "Houses" : "Rooms";
+}
+
 export function stayCapacity(kind: StayKind, sleeps: number) {
   const beds = Math.max(1, sleeps);
   const rooms =

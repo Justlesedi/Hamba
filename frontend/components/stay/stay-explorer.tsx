@@ -6,11 +6,12 @@ import { chooseStayAction } from "@/app/actions/stays";
 import { formatTravelAway, movedAtLeastKm } from "@backend/lib/geo";
 import { formatZar } from "@backend/lib/money";
 import { filterByPriceBand, type PriceBand } from "@backend/lib/price-band";
-import { stayKindLabel, stayLayoutLabel, type QuotedStay } from "@backend/types/stay";
+import { stayKindLabel, stayLayoutLabel, stayUnitNoun, type QuotedStay } from "@backend/types/stay";
 import { useLiveLocation } from "@/components/location/use-live-location";
 import { PriceFilter } from "@/components/plan/price-filter";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { guestLabel } from "@/lib/guests";
 
 const StayMap = dynamic(() => import("@/components/stay/stay-map"), {
   ssr: false,
@@ -150,9 +151,9 @@ export function StayExplorer({
     <div className="space-y-4">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <p className="max-w-xl text-sm text-muted">
-          Priced for {travellers} {travellers === 1 ? "traveller" : "travellers"}{" "}
-          and {nights} {nights === 1 ? "night" : "nights"}. Stays follow your
-          live location when you are in {destination}.
+          Priced for {guestLabel(travellers)} and {nights}{" "}
+          {nights === 1 ? "night" : "nights"}. Stays follow you when you are in{" "}
+          {destination}.
         </p>
         <Button type="button" variant="secondary" onClick={useMyLocation}>
           Use my location
@@ -253,8 +254,9 @@ export function StayExplorer({
               <div>
                 <p className="text-sm text-muted">For this trip</p>
                 <p className="mt-1 font-medium">
-                  {formatZar(selected.nightlyCents)} per unit · {selected.units}{" "}
-                  {selected.units === 1 ? "unit" : "units"} · {selected.nights}{" "}
+                  {formatZar(selected.nightlyCents)} per{" "}
+                  {stayUnitNoun(selected.kind)} · {selected.units}{" "}
+                  {stayUnitNoun(selected.kind, selected.units)} · {selected.nights}{" "}
                   {selected.nights === 1 ? "night" : "nights"}
                 </p>
                 <p className="mt-1 text-lg font-semibold">

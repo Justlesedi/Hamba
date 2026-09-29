@@ -9,10 +9,12 @@ import type {
   ForecastActivity,
   TransportLeg,
 } from "@backend/types/budget";
+import { stayUnitNoun } from "@backend/types/stay";
 import { OpenBadge } from "@/components/plan/open-badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { guestLabel } from "@/lib/guests";
 
 export function BudgetSummary({
   tripId,
@@ -131,10 +133,11 @@ function ForecastResults({
             </p>
             <p className="mt-2 text-sm text-muted">
               {forecast.stay.area} · {forecast.stay.rooms}{" "}
-              {forecast.stay.rooms === 1 ? "room" : "rooms"} ·{" "}
+              {stayUnitNoun(forecast.stay.kind, forecast.stay.rooms)} ·{" "}
               {forecast.stay.nights}{" "}
               {forecast.stay.nights === 1 ? "night" : "nights"} ·{" "}
-              {formatZar(forecast.stay.nightlyCents)} per room per night
+              {formatZar(forecast.stay.nightlyCents)} per{" "}
+              {stayUnitNoun(forecast.stay.kind)} per night
             </p>
             <p className="mt-3 text-sm">
               <Link href={planHref} className="font-medium hover:text-accent">
@@ -204,9 +207,7 @@ function ForecastResults({
       <Card>
         <h2 className="font-medium">Chosen places</h2>
         <p className="mt-1 text-sm text-muted">
-          Costs for {forecast.travellers}{" "}
-          {forecast.travellers === 1 ? "traveller" : "travellers"}, at each
-          company’s per-person rate.
+          For {guestLabel(forecast.travellers)}, at each place’s own rate.
         </p>
         {forecast.activities.length === 0 ? (
           <p className="mt-4 text-sm text-muted">
@@ -275,10 +276,10 @@ function ForecastResults({
       </Card>
 
       <Card>
-        <h2 className="font-medium">Ready to book?</h2>
+        <h2 className="font-medium">Happy with the picture?</h2>
         <p className="mt-2 text-sm text-muted">
-          Hamba does not take payment. Your dates and travellers go to that
-          place’s booking site.
+          We do not take payment. Advance to Book, and your dates and guests go
+          with you to that place’s own site.
         </p>
         <p className="mt-4">
           <Link

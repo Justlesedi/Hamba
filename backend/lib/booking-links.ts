@@ -62,7 +62,7 @@ function tripCarry(options: {
   const start = dates.format(new Date(`${options.checkIn}T12:00:00`));
   const end = dates.format(new Date(`${options.checkOut}T12:00:00`));
   const people =
-    options.travellers === 1 ? "1 traveller" : `${options.travellers} travellers`;
+    options.travellers === 1 ? "1 Guest" : `${options.travellers} Guests`;
   const units =
     options.units && options.unitWord
       ? options.units === 1

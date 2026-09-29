@@ -1,15 +1,19 @@
 "use client";
 
+import { stayUnitHeading, stayUnitNoun, type StayKind } from "@backend/types/stay";
+
 export function StayUnitsSelect({
   travellers,
   value,
   onChange,
+  kind = null,
   name = "stayUnits",
   submitOnChange = false,
 }: {
   travellers: number;
   value: number;
   onChange: (units: number) => void;
+  kind?: StayKind | null;
   name?: string;
   submitOnChange?: boolean;
 }) {
@@ -17,7 +21,7 @@ export function StayUnitsSelect({
 
   return (
     <label className="flex items-center gap-2 text-sm">
-      <span className="text-muted">Rooms</span>
+      <span className="text-muted">{stayUnitHeading(kind)}</span>
       <select
         name={name}
         value={value}
@@ -31,7 +35,7 @@ export function StayUnitsSelect({
       >
         {Array.from({ length: max }, (_, index) => index + 1).map((count) => (
           <option key={count} value={count}>
-            {count} {count === 1 ? "room" : "rooms"}
+            {count} {stayUnitNoun(kind, count)}
           </option>
         ))}
       </select>

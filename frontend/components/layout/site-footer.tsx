@@ -23,9 +23,15 @@ export function SiteFooter({ tone = "sand" }: { tone?: "sand" | "dusk" }) {
       <div className="mx-auto flex max-w-6xl flex-col gap-8 px-6 py-10 sm:flex-row sm:items-end sm:justify-between">
         <div className="max-w-sm">
           <BrandMark href="/" tone={dusk ? "on-film" : "light"} size="footer" />
-          <p className="mt-3 text-sm leading-relaxed">
-            Go. Plan a South African trip around a real stay, see the spend in
-            rand, then book where the place actually takes the money.
+          <p
+            className={`mt-3 font-display text-xl leading-snug ${
+              dusk ? "text-sand" : "text-foreground"
+            }`}
+          >
+            Hamba. Go first.
+          </p>
+          <p className="mt-1 text-sm leading-relaxed">
+            A South African word for the road. Book at the door.
           </p>
         </div>
         <nav className="flex flex-wrap gap-x-5 gap-y-2 text-sm">

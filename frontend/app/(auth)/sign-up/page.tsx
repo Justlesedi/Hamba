@@ -10,8 +10,7 @@ export default function Page() {
       <BrandMark href="/" size="auth" />
       <h1 className="mt-6 font-display text-4xl">Take the first step.</h1>
       <p className="mt-2 mb-8 text-muted">
-        A name, an email, and a password with a letter, a number, and a special
-        character. Then a destination.
+        Your name, email, and a strong password. Then a destination.
       </p>
       <SignUpForm />
       <p className="mt-6 text-sm text-muted">

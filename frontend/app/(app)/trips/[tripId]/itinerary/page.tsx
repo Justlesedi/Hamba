@@ -56,7 +56,10 @@ export default async function Page({
       <div>
         <p className="kicker">The neighbourhood</p>
         <h1 className="mt-2 font-display text-4xl">Plan</h1>
-        <p className="mt-1 text-muted">{trip.destination}</p>
+        <p className="mt-1 text-muted">
+          Choose a stay in {trip.destination}, then walk the neighbourhood from
+          there.
+        </p>
       </div>
       <ItineraryExplorer
         tripId={trip.id}

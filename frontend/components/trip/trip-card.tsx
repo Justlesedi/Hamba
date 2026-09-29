@@ -2,6 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { DeleteTripButton } from "@/components/trip/delete-trip-button";
 import { sceneFor } from "@/lib/media";
+import { guestLabel } from "@/lib/guests";
 import type { Trip } from "@backend/types/trip";
 
 function formatDates(start: Date, end: Date) {
@@ -35,8 +36,7 @@ export function TripCard({ trip }: { trip: Trip }) {
         <div className="p-5">
           <p className="text-sm text-muted">{trip.destination}</p>
           <p className="mt-2 text-sm">
-            {formatDates(trip.startDate, trip.endDate)} · {trip.travellers}{" "}
-            {trip.travellers === 1 ? "traveller" : "travellers"}
+            {formatDates(trip.startDate, trip.endDate)} · {guestLabel(trip.travellers)}
           </p>
         </div>
       </Link>

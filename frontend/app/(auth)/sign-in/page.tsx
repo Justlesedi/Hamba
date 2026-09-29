@@ -22,7 +22,7 @@ export default async function Page({
         </p>
       ) : (
         <p className="mt-2 mb-8 text-muted">
-          Continue the trip you already started.
+          Continue a trip you already started.
         </p>
       )}
       <SignInForm />

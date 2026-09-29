@@ -20,7 +20,7 @@ export const metadata: Metadata = {
     template: "%s · Hamba",
   },
   description:
-    "Plan a South African trip around a stay, forecast the spend in rand, then book where the place actually takes the money.",
+    "Plan a South African stay, see the rand, then book with the place itself.",
 };
 
 export default function RootLayout({

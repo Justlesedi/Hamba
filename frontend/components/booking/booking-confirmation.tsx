@@ -9,6 +9,7 @@ import type { Booking } from "@backend/types/booking";
 import { DeleteBookingButton } from "@/components/booking/delete-booking-button";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { guestLabel } from "@/lib/guests";
 
 function formatDate(value: Date) {
   return new Intl.DateTimeFormat("en-ZA", {
@@ -43,8 +44,7 @@ export function BookingConfirmation({
         <p className="mt-1 text-muted">{booking.destination}</p>
         <p className="mt-3 text-sm">
           {formatDate(booking.startDate)} – {formatDate(booking.endDate)} ·{" "}
-          {booking.travellers}{" "}
-          {booking.travellers === 1 ? "traveller" : "travellers"}
+          {guestLabel(booking.travellers)}
         </p>
         <p className="mt-4 text-2xl font-semibold">
           {formatZar(booking.totalCents)}

@@ -16,8 +16,7 @@ export default async function Page() {
           <p className="kicker">Your road</p>
           <h1 className="mt-2 font-display text-4xl sm:text-5xl">Trips</h1>
           <p className="mt-2 max-w-md text-muted">
-            Each one is a stay, a few days, and the places you will actually
-            walk.
+            Each one is a stay, a few days, and the land you will walk.
           </p>
         </div>
         <Link

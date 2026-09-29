@@ -10,7 +10,7 @@ export default function Page() {
         <p className="kicker">Begin</p>
         <h1 className="mt-2 font-display text-4xl">New trip</h1>
         <p className="mt-2 text-muted">
-          A name, a destination, dates on the calendar, and who is coming.
+          A name, a destination, dates, and how many Guests.
         </p>
       </div>
       <Card>

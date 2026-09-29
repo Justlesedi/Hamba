@@ -61,8 +61,8 @@ export default async function Page({
         <h1 className="mt-2 font-display text-4xl">Book {trip.title}</h1>
         <p className="text-muted">{trip.destination}</p>
         <p className="mt-2 text-sm text-muted">
-          Hamba does not take payment. Your dates and travellers go to that
-          place’s booking site. If it has no site, you travel there.
+          We do not take payment. Your dates and guests go to that place’s own
+          site. If it has no site, you go there.
         </p>
       </div>
       <CheckoutForm

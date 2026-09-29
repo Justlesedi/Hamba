@@ -19,8 +19,8 @@ export default async function Page() {
         <p className="kicker">The door</p>
         <h1 className="mt-2 font-display text-4xl">Bookings</h1>
         <p className="mt-2 max-w-lg text-muted">
-          Hamba does not take payment. Open a trip to book on that place’s
-          site, or travel there if it has none.
+          We do not take payment. Open a trip to book on that place’s site, or
+          visit if they have none.
         </p>
       </div>
 

@@ -20,11 +20,17 @@ export default async function Page() {
         </div>
         <SiteHeader user={user} tone="on-film" />
         <div className="relative mx-auto flex min-h-[70vh] max-w-6xl items-end px-6 pb-16 pt-28">
-          <div className="max-w-2xl">
+          <div className="w-full max-w-5xl">
             <p className="kicker text-gold">About Hamba</p>
-            <h1 className="mt-4 font-display text-5xl leading-tight sm:text-6xl">
-              A planner for people who still want to arrive.
-            </h1>
+            <div className="mt-4 flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between sm:gap-10 lg:gap-16">
+              <h1 className="max-w-xl font-display text-5xl leading-tight sm:text-6xl">
+                A planner for people who still want to arrive.
+              </h1>
+              <p className="max-w-xs text-base leading-relaxed text-sand/80 lg:pb-2">
+                Hamba is isiXhosa and isiZulu for go. The rest of the trip
+                stays on this soil.
+              </p>
+            </div>
           </div>
         </div>
       </section>
@@ -36,14 +42,9 @@ export default async function Page() {
           image={SCENES.cape}
         >
           <p>
-            In isiXhosa and isiZulu it is a verb and a blessing. Leave the yard.
-            Take the road. We built a place that holds the first half of a
-            South African trip: where you sleep, what you do, what it might
-            cost in rand.
-          </p>
-          <p>
-            The second half still belongs to the lodge, the park, the cableway,
-            the gate. That is not a gap. That is the point.
+            In isiXhosa and isiZulu it is a welcome as much as a verb. We help
+            you plan a South African trip: a stay, things to do, and a forecast
+            in rand. When it is time to pay, you book with the place itself.
           </p>
         </Zigzag>
 
@@ -54,13 +55,9 @@ export default async function Page() {
           image={SCENES.lion}
         >
           <p>
-            Hamba does not take payment. We send your dates, travellers, and
-            rooms to the site that already sells the stay or the ticket. If a
-            place has no site, we say so, plainly: you travel there yourself.
-          </p>
-          <p>
-            Plan and Budget stay a forecast. Book is a handoff. Hosting is still
-            ahead of us.
+            We send your dates, guests, and the stay you chose to the site that
+            already sells the room or house. If a place has no site, we say so.
+            Plan and Budget are a forecast. Book is the handoff.
           </p>
         </Zigzag>
 
@@ -70,13 +67,8 @@ export default async function Page() {
           image={SCENES.wine}
         >
           <p>
-            Cape Town first, then the rest of the map we can walk in an hour
-            from a stay. Stays, activities, and food are seeded so the loop is
-            real enough to use, honest enough not to fake occupancy.
-          </p>
-          <p>
-            We are a small product. The country is not. Hamba tries to keep
-            that proportion.
+            Start in Cape Town, then wander as far as a stay can walk. We are a
+            small planner for a large country, and we keep that honest.
           </p>
         </Zigzag>
       </div>

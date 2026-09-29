@@ -9,7 +9,7 @@ import {
 } from "@backend/lib/booking-links";
 import { formatZar } from "@backend/lib/money";
 import type { NearbyActivity } from "@backend/types/activity";
-import { type QuotedStay } from "@backend/types/stay";
+import { stayUnitNoun, type QuotedStay } from "@backend/types/stay";
 import { Card } from "@/components/ui/card";
 
 function activityPartyCents(place: NearbyActivity, travellers: number) {
@@ -20,18 +20,14 @@ function activityPartyCents(place: NearbyActivity, travellers: number) {
 }
 
 function stayUnitsLabel(stay: QuotedStay) {
-  if (stay.kind === "house") {
-    return stay.units === 1 ? "1 house" : `${stay.units} houses`;
-  }
-  return stay.units === 1 ? "1 room" : `${stay.units} rooms`;
+  return `${stay.units} ${stayUnitNoun(stay.kind, stay.units)}`;
 }
 
 function HandoffAction({ handoff }: { handoff: BookingHandoff }) {
   if (handoff.mode === "in_person" || !handoff.href) {
     return (
       <p className="mt-3 text-sm text-muted">
-        You have to travel there yourself. This place does not take bookings
-        online.
+        You visit in person. This place does not take bookings online.
       </p>
     );
   }
@@ -152,8 +148,8 @@ export function CheckoutForm({
                       <p className="font-medium">{place.name}</p>
                       <p className="mt-1 text-sm text-muted">{place.company}</p>
                       <p className="mt-3 text-sm text-muted">
-                        You have to travel there yourself. This place does not
-                        take bookings online.
+                        You visit in person. This place does not take bookings
+                        online.
                       </p>
                     </li>
                   ))}

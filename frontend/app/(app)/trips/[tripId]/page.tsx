@@ -63,7 +63,7 @@ export default async function Page({
           </p>
         </div>
         <div>
-          <p className="kicker">Travellers</p>
+          <p className="kicker">Guests</p>
           <p className="mt-2 font-medium">{trip.travellers}</p>
         </div>
         <div>
@@ -83,8 +83,7 @@ export default async function Page({
         <div>
           <p className="kicker">Next</p>
           <p className="mt-3 max-w-md text-muted">
-            Plan the neighbourhood, read the forecast, then book on the
-            operator’s own site.
+            Plan around a stay, check the rand, then book with them.
           </p>
         </div>
         <p className="text-sm sm:text-right">

@@ -32,7 +32,7 @@ export function TripForm() {
         endError={state?.errors?.endDate?.[0]}
       />
       <Input
-        label="Travellers"
+        label="Guests"
         name="travellers"
         inputMode="numeric"
         pattern="[0-9]*"

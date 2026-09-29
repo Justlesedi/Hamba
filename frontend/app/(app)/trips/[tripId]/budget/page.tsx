@@ -31,8 +31,7 @@ export default async function Page({
         <p className="kicker">The forecast</p>
         <h1 className="mt-2 font-display text-4xl">Budget</h1>
         <p className="mt-1 text-muted">
-          Costs for {trip.destination}. This is a picture of the trip, not a
-          bill.
+          A rand picture of {trip.destination} — not a bill.
         </p>
       </div>
       <BudgetSummary
