@@ -8,6 +8,19 @@ export type StayKind =
   | "camp"
   | "apartment";
 
+export const STAY_KIND_FILTERS: Array<{
+  id: StayKind | "all";
+  label: string;
+}> = [
+  { id: "all", label: "All stays" },
+  { id: "hotel", label: "Hotels" },
+  { id: "guesthouse", label: "Guesthouses" },
+  { id: "house", label: "Houses" },
+  { id: "apartment", label: "Apartments" },
+  { id: "lodge", label: "Lodges" },
+  { id: "camp", label: "Camps" },
+];
+
 export function stayKindLabel(kind: StayKind) {
   if (kind === "house") {
     return "House";

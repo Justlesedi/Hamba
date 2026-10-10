@@ -75,6 +75,8 @@ export async function GET(
     nights,
     units: trip.stayUnits,
     travellers: trip.travellers,
+    destination: trip.destination,
+    query: url.searchParams.get("q") ?? undefined,
     keepStayId: trip.stayId,
     keepActivityIds: listTripPlaceIds(tripId),
   });

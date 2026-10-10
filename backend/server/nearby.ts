@@ -21,6 +21,8 @@ export function listingsAround(options: {
   nights: number;
   units: number;
   travellers: number;
+  destination?: string;
+  query?: string;
   keepStayId?: string | null;
   keepActivityIds?: string[];
 }) {
@@ -28,6 +30,8 @@ export function listingsAround(options: {
     nights: options.nights,
     units: options.units,
     travellers: options.travellers,
+    destination: options.destination,
+    query: options.query,
   });
 
   if (

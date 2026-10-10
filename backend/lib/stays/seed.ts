@@ -2,6 +2,7 @@ import type { DatabaseSync } from "node:sqlite";
 import type { Stay } from "../../types/stay";
 import { stay } from "./factory";
 import { EXTRA_STAYS } from "./seed-extra";
+import { METRO_STAYS } from "./seed-metro";
 
 /** Recognisable hotels, guesthouses, lodges, and camps with the area they sit in. */
 const CORE_STAYS: Stay[] = [
@@ -103,7 +104,7 @@ const CORE_STAYS: Stay[] = [
   stay("stay_springbok_naries", "Naries Namakwa Retreat", -29.6824, 17.8216, "Naries Namakwa Retreat", "Springbok", "lodge", 2, 2400, "Desert retreat west of Springbok."),
 ];
 
-export const STAYS: Stay[] = [...CORE_STAYS, ...EXTRA_STAYS];
+export const STAYS: Stay[] = [...CORE_STAYS, ...EXTRA_STAYS, ...METRO_STAYS];
 
 export function seedStays(database: DatabaseSync) {
   const insert = database.prepare(

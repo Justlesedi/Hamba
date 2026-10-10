@@ -1,9 +1,10 @@
 import { db } from "../lib/db";
 import {
   haversineKm,
-  isWithinAnHour,
+  isWithinStayRange,
   MAX_STAY_DISTANCE_KM,
 } from "../lib/geo";
+import { stayMatchesDestination, stayMatchesQuery } from "../lib/stays/match";
 import {
   clampStayUnits,
   stayTotalCents,
@@ -105,9 +106,12 @@ export function searchNearbyStays(
     units?: number;
     travellers?: number;
     radiusKm?: number;
+    destination?: string;
+    query?: string;
   },
 ): QuotedStay[] {
   const cap = Math.min(options.radiusKm ?? MAX_STAY_DISTANCE_KM, MAX_STAY_DISTANCE_KM);
+  const query = options.query?.trim() ?? "";
   const rows = db
     .prepare(
       `SELECT id, name, latitude, longitude, company, area, kind, sleeps, beds, rooms, nightlyCents, note, operatingHours
@@ -115,24 +119,31 @@ export function searchNearbyStays(
     )
     .all() as StayRow[];
 
-  return rows
-    .map((row) => {
-      const stay = mapStay(row);
-      const distanceKm =
-        Math.round(haversineKm(latitude, longitude, stay.latitude, stay.longitude) * 10) /
-        10;
+  const quoted = rows.map((row) => {
+    const stay = mapStay(row);
+    const distanceKm =
+      Math.round(haversineKm(latitude, longitude, stay.latitude, stay.longitude) * 10) /
+      10;
 
-      return quoteStay(stay, {
-        nights: options.nights,
-        units: options.units,
-        travellers: options.travellers,
-        distanceKm,
+    return quoteStay(stay, {
+      nights: options.nights,
+      units: options.units,
+      travellers: options.travellers,
+      distanceKm,
+    });
+  });
+
+  const searched = query
+    ? quoted.filter((stay) => stayMatchesQuery(stay, query))
+    : quoted.filter((stay) => {
+        const nearby = stay.distanceKm <= cap && isWithinStayRange(stay.distanceKm);
+        const inPlace = options.destination
+          ? stayMatchesDestination(stay, options.destination)
+          : false;
+        return nearby || inPlace;
       });
-    })
-    .filter(
-      (stay) => stay.distanceKm <= cap && isWithinAnHour(stay.distanceKm),
-    )
-    .sort((a, b) => a.distanceKm - b.distanceKm);
+
+  return searched.sort((left, right) => left.distanceKm - right.distanceKm);
 }
 
 export function chooseStayForTrip(

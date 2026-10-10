@@ -3,9 +3,12 @@ import { SOUTH_AFRICA_PLACES } from "./places/south-africa";
 export type MapCenter = { lat: number; lng: number };
 
 export const MAX_TRAVEL_MINUTES = 60;
+export const MAX_STAY_MINUTES = 90;
 export const AVERAGE_DRIVE_KMH = 60;
 export const MAX_ACTIVITY_DISTANCE_KM = AVERAGE_DRIVE_KMH;
-export const MAX_STAY_DISTANCE_KM = MAX_ACTIVITY_DISTANCE_KM;
+export const MAX_STAY_DISTANCE_KM = Math.round(
+  (AVERAGE_DRIVE_KMH * MAX_STAY_MINUTES) / 60,
+);
 
 export function travelMinutesFromKm(distanceKm: number) {
   if (distanceKm <= 0) {
@@ -17,6 +20,10 @@ export function travelMinutesFromKm(distanceKm: number) {
 
 export function isWithinAnHour(distanceKm: number) {
   return travelMinutesFromKm(distanceKm) <= MAX_TRAVEL_MINUTES;
+}
+
+export function isWithinStayRange(distanceKm: number) {
+  return travelMinutesFromKm(distanceKm) <= MAX_STAY_MINUTES;
 }
 
 export function formatTravelAway(distanceKm: number) {
@@ -34,7 +41,13 @@ export function formatTravelAway(distanceKm: number) {
     return `${distance} · ${minutes} min`;
   }
 
-  return `${distance} · 1 h`;
+  const hours = Math.floor(minutes / 60);
+  const rest = minutes % 60;
+  if (rest === 0) {
+    return `${distance} · ${hours} h`;
+  }
+
+  return `${distance} · ${hours} h ${rest} min`;
 }
 
 export function normalizePlace(value: string) {

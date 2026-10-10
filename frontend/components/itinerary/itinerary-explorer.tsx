@@ -17,15 +17,18 @@ import { monthEnd, monthStart } from "@backend/lib/calendar/dates";
 import { ticketChannelLabel } from "@backend/lib/activities/tickets";
 import type { NearbyActivity } from "@backend/types/activity";
 import {
+  STAY_KIND_FILTERS,
   stayKindLabel,
   stayLayoutLabel,
   stayUnitNoun,
   type QuotedStay,
+  type StayKind,
 } from "@backend/types/stay";
 import { BusyBadge } from "@/components/calendar/busy-badge";
 import { BusyCalendar } from "@/components/calendar/busy-calendar";
 import { useBusyDays } from "@/components/calendar/use-busy-days";
 import { useLiveLocation } from "@/components/location/use-live-location";
+import { ChipFilter } from "@/components/plan/chip-filter";
 import { OpenBadge } from "@/components/plan/open-badge";
 import { PriceFilter } from "@/components/plan/price-filter";
 import { StayUnitsSelect } from "@/components/stay/stay-units-select";
@@ -145,6 +148,8 @@ export function ItineraryExplorer({
   );
   const [pickedIds, setPickedIds] = useState<string[]>([]);
   const [stayBand, setStayBand] = useState<PriceBand>("all");
+  const [stayKind, setStayKind] = useState<StayKind | "all">("all");
+  const [stayQuery, setStayQuery] = useState("");
   const [activityBand, setActivityBand] = useState<PriceBand>("all");
   const [foodBand, setFoodBand] = useState<PriceBand>("all");
   const [month, setMonth] = useState(startDate.slice(0, 7));
@@ -201,15 +206,32 @@ export function ItineraryExplorer({
   );
   const nearbyActivities = activities.filter((place) => place.kind !== "food");
   const nearbyFood = activities.filter((place) => place.kind === "food");
+  const catalogStays = useMemo(() => {
+    const needle = stayQuery.trim().toLowerCase();
+    return stays.filter((stay) => {
+      if (stay.id === chosenStayId) {
+        return true;
+      }
+      if (stayKind !== "all" && stay.kind !== stayKind) {
+        return false;
+      }
+      if (!needle) {
+        return true;
+      }
+      return `${stay.name} ${stay.area} ${stay.company} ${stay.note}`
+        .toLowerCase()
+        .includes(needle);
+    });
+  }, [chosenStayId, stayKind, stayQuery, stays]);
   const visibleStays = useMemo(
     () =>
       filterByPriceBand(
-        stays,
+        catalogStays,
         stayBand,
         (stay) => stay.nightlyCents,
         (stay) => stay.id === chosenStayId || stay.id === selectedId,
       ),
-    [chosenStayId, selectedId, stayBand, stays],
+    [catalogStays, chosenStayId, selectedId, stayBand],
   );
   const visibleActivities = useMemo(
     () =>
@@ -282,6 +304,9 @@ export function ItineraryExplorer({
           activityLat: String(activityCenter.lat),
           activityLng: String(activityCenter.lng),
         });
+        if (stayQuery.trim().length >= 2) {
+          params.set("q", stayQuery.trim());
+        }
         const response = await fetch(
           `/api/trips/${tripId}/itinerary?${params.toString()}`,
         );
@@ -315,6 +340,7 @@ export function ItineraryExplorer({
     activityCenter.lng,
     center.lat,
     center.lng,
+    stayQuery,
     tripId,
   ]);
 
@@ -472,13 +498,13 @@ export function ItineraryExplorer({
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap items-start justify-between gap-3">
-        <div className="max-w-xl text-sm text-muted">
-          <p>
-            {stayHub
-              ? `Things to do and eat sit around ${stayHub.name} in ${stayHub.area}.`
-              : `Choose a stay in ${destination}, and nearby places will gather around it.`}
+        {stayHub ? (
+          <p className="max-w-xl text-sm text-muted">
+            Things to do and eat now sit around {stayHub.name}.
           </p>
-        </div>
+        ) : (
+          <span />
+        )}
         <Button type="button" variant="secondary" onClick={useMyLocation}>
           Use my location
         </Button>
@@ -524,9 +550,15 @@ export function ItineraryExplorer({
             stays={visibleStays}
             emptyLabel={
               stays.length === 0
-                ? "No stays nearby."
-                : "No stays in this price range."
+                ? "No stays for this place yet."
+                : catalogStays.length === 0
+                  ? "No stays match that search."
+                  : "No stays in this price range."
             }
+            query={stayQuery}
+            onQueryChange={setStayQuery}
+            stayKind={stayKind}
+            onStayKindChange={setStayKind}
             priceBand={stayBand}
             onPriceBandChange={setStayBand}
             selectedId={selectedKind === "stay" ? selectedId : null}
@@ -795,6 +827,10 @@ function StayList({
   tripId,
   stays,
   emptyLabel,
+  query,
+  onQueryChange,
+  stayKind,
+  onStayKindChange,
   priceBand,
   onPriceBandChange,
   selectedId,
@@ -812,6 +848,10 @@ function StayList({
   tripId: string;
   stays: QuotedStay[];
   emptyLabel: string;
+  query: string;
+  onQueryChange: (value: string) => void;
+  stayKind: StayKind | "all";
+  onStayKindChange: (value: StayKind | "all") => void;
   priceBand: PriceBand;
   onPriceBandChange: (band: PriceBand) => void;
   selectedId: string | null;
@@ -839,7 +879,14 @@ function StayList({
   return (
     <div className="overflow-hidden rounded-2xl border border-border bg-card">
       <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border px-6 py-4">
-        <h2 className="font-medium">Accommodation</h2>
+        <div>
+          <h2 className="font-medium">Accommodation</h2>
+          {stays.length > 0 ? (
+            <p className="text-xs text-muted">
+              {stays.length} {stays.length === 1 ? "stay" : "stays"}
+            </p>
+          ) : null}
+        </div>
         <div className="flex flex-wrap items-center gap-3">
           {loading ? <p className="text-sm text-muted">Updating…</p> : null}
           {chosenStayId ? (
@@ -864,12 +911,34 @@ function StayList({
           )}
         </div>
       </div>
-      <div className="border-b border-border px-6 py-3">
-        <PriceFilter
-          label="Stay price"
-          value={priceBand}
-          onChange={onPriceBandChange}
-        />
+      <div className="space-y-3 border-b border-border px-6 py-3">
+        <label className="block">
+          <span className="sr-only">Search stays</span>
+          <input
+            type="search"
+            value={query}
+            onChange={(event) => onQueryChange(event.target.value)}
+            placeholder="Search hotels, houses, guesthouses…"
+            className="w-full rounded-full border border-border bg-background px-4 py-2 text-sm outline-none transition focus:border-accent"
+          />
+        </label>
+        <div className="space-y-1.5">
+          <p className="text-xs text-muted">Stay type</p>
+          <ChipFilter
+            label="Stay type"
+            value={stayKind}
+            onChange={onStayKindChange}
+            options={STAY_KIND_FILTERS}
+          />
+        </div>
+        <div className="space-y-1.5">
+          <p className="text-xs text-muted">Stay price</p>
+          <PriceFilter
+            label="Stay price"
+            value={priceBand}
+            onChange={onPriceBandChange}
+          />
+        </div>
       </div>
       {message ? (
         <p className="border-b border-border px-6 py-3 text-sm text-accent">
@@ -879,7 +948,7 @@ function StayList({
       {stays.length === 0 ? (
         <p className="px-6 py-5 text-sm text-muted">{emptyLabel}</p>
       ) : (
-        <ul className="divide-y divide-border">
+        <ul className="max-h-[36rem] divide-y divide-border overflow-y-auto">
           {stays.map((stay) => {
             const current = stay.id === selectedId;
             const chosen = stay.id === chosenStayId;

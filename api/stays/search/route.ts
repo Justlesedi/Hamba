@@ -30,6 +30,8 @@ export async function GET(request: Request) {
     travellers: Number.isFinite(travellers) && travellers > 0 ? travellers : 2,
     nights: Number.isFinite(nights) && nights >= 0 ? nights : 1,
     units: Number.isFinite(units) && units > 0 ? units : 1,
+    destination: url.searchParams.get("destination") ?? undefined,
+    query: url.searchParams.get("q") ?? undefined,
   });
 
   return NextResponse.json({
