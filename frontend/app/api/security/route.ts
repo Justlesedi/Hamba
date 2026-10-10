@@ -1,4 +1,9 @@
-import { ACCOUNT_EXISTS_LOGIN_PATH, PASSWORD_POLICY, SECURITY_HEADERS } from "@backend/lib/security";
+import {
+  ACCOUNT_EXISTS_LOGIN_PATH,
+  PASSWORD_POLICY,
+  SECURITY_HEADERS,
+  SIGN_IN_LIMIT,
+} from "@backend/lib/security";
 import { jsonWithSecurity } from "@/lib/security-response";
 
 export async function GET() {
@@ -9,6 +14,7 @@ export async function GET() {
       denySignUp: true,
       redirect: ACCOUNT_EXISTS_LOGIN_PATH,
     },
+    signInLimit: SIGN_IN_LIMIT,
     endpoints: {
       password: { method: ["GET", "POST"], path: "/api/security/password" },
       email: { method: ["POST"], path: "/api/security/email" },

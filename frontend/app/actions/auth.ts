@@ -9,6 +9,7 @@ import {
   type SignInFormState,
   type SignUpFormState,
 } from "@backend/lib/validation";
+import { requestIp } from "@/lib/client-ip";
 import { createSession, deleteSession } from "@/lib/session";
 
 export async function signUp(
@@ -52,7 +53,7 @@ export async function signIn(
   }
 
   try {
-    const user = await authenticateUser(parsed.data);
+    const user = await authenticateUser(parsed.data, await requestIp());
     await createSession(user.id);
   } catch (error) {
     if (error instanceof AuthError) {

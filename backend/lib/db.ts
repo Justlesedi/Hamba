@@ -147,6 +147,15 @@ db.exec(`
     body TEXT NOT NULL,
     fetchedAt TEXT NOT NULL
   );
+
+  CREATE TABLE IF NOT EXISTS login_attempts (
+    id TEXT PRIMARY KEY,
+    subject TEXT NOT NULL,
+    createdAt TEXT NOT NULL
+  );
+
+  CREATE INDEX IF NOT EXISTS login_attempts_subject ON login_attempts(subject);
+  CREATE INDEX IF NOT EXISTS login_attempts_createdAt ON login_attempts(createdAt);
 `);
 
 {

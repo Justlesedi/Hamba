@@ -9,6 +9,13 @@ export const PASSWORD_POLICY = {
   message: PASSWORD_RULE,
 };
 
+export const SIGN_IN_LIMIT = {
+  maxFailures: 5,
+  ipMaxFailures: 20,
+  windowMinutes: 15,
+  message: "Too many sign-in tries. Wait 15 minutes, then try again.",
+};
+
 export const SECURITY_HEADERS: Record<string, string> = {
   "X-Content-Type-Options": "nosniff",
   "X-Frame-Options": "DENY",
