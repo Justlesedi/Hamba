@@ -45,6 +45,9 @@ export function StayPicker({
                 {stayUnitNoun(stay.kind, stay.units)} · {stay.nights}{" "}
                 {stay.nights === 1 ? "night" : "nights"} · {stayLayoutLabel(stay)}
               </p>
+              {stay.note ? (
+                <p className="mt-1 text-sm text-muted">{stay.note}</p>
+              ) : null}
               <p className="mt-1 text-sm font-medium">
                 {formatZar(stay.totalCents)}
               </p>

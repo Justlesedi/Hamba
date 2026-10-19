@@ -16,6 +16,8 @@ export default function Page() {
         <p>
           You may create an account, plan trips, and follow our links to book
           elsewhere. Keep your details true, and keep your password to yourself.
+          If you forget the email or password, recover it from the sign-in page
+          — we will not show those details on the screen.
         </p>
       </section>
       <section className="space-y-3">

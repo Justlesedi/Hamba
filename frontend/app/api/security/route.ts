@@ -1,6 +1,8 @@
 import {
   ACCOUNT_EXISTS_LOGIN_PATH,
+  ACCOUNT_RECOVERED_LOGIN_PATH,
   PASSWORD_POLICY,
+  RECOVERY,
   SECURITY_HEADERS,
   SIGN_IN_LIMIT,
 } from "@backend/lib/security";
@@ -15,12 +17,19 @@ export async function GET() {
       redirect: ACCOUNT_EXISTS_LOGIN_PATH,
     },
     signInLimit: SIGN_IN_LIMIT,
+    recovery: {
+      ...RECOVERY,
+      redirect: ACCOUNT_RECOVERED_LOGIN_PATH,
+    },
     endpoints: {
       password: { method: ["GET", "POST"], path: "/api/security/password" },
       email: { method: ["POST"], path: "/api/security/email" },
       signUp: { method: ["POST"], path: "/api/auth/sign-up" },
       signIn: { method: ["POST"], path: "/api/auth/sign-in" },
       signOut: { method: ["POST"], path: "/api/auth/sign-out" },
+      recoverEmail: { method: ["POST"], path: "/api/auth/recover/email" },
+      recoverPassword: { method: ["POST"], path: "/api/auth/recover/password" },
+      resetPassword: { method: ["POST"], path: "/api/auth/recover/reset" },
     },
   });
 }

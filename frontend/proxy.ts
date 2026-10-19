@@ -12,6 +12,14 @@ const publicRoutes = new Set([
   "/cookies",
 ]);
 
+function isPublicPath(pathname: string) {
+  return (
+    publicRoutes.has(pathname) ||
+    pathname === "/recover" ||
+    pathname.startsWith("/recover/")
+  );
+}
+
 function withSecurityHeaders(response: NextResponse) {
   for (const [key, value] of Object.entries(SECURITY_HEADERS)) {
     response.headers.set(key, value);
@@ -23,7 +31,7 @@ export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const session = await decrypt(request.cookies.get("session")?.value);
 
-  if (!publicRoutes.has(pathname) && !session?.userId) {
+  if (!isPublicPath(pathname) && !session?.userId) {
     return withSecurityHeaders(
       NextResponse.redirect(new URL("/sign-in", request.url)),
     );

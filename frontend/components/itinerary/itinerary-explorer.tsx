@@ -28,7 +28,6 @@ import { BusyBadge } from "@/components/calendar/busy-badge";
 import { BusyCalendar } from "@/components/calendar/busy-calendar";
 import { useBusyDays } from "@/components/calendar/use-busy-days";
 import { useLiveLocation } from "@/components/location/use-live-location";
-import { ChipFilter } from "@/components/plan/chip-filter";
 import { OpenBadge } from "@/components/plan/open-badge";
 import { PriceFilter } from "@/components/plan/price-filter";
 import { StayUnitsSelect } from "@/components/stay/stay-units-select";
@@ -687,7 +686,8 @@ function ChosenPlan({
             <p className="mt-1 text-sm text-muted">
               {stayKindLabel(stay.kind)} · {unitCount}{" "}
               {stayUnitNoun(stay.kind, unitCount)}
-              {stay.kind === "house" && unitCount > 1
+              {(stay.kind === "house" || stay.kind === "resort") &&
+              unitCount > 1
                 ? ` · ${stayLayoutLabel(stay)} each`
                 : ` · ${stayLayoutLabel(stay)}`}{" "}
               · {formatZar(stay.nightlyCents)} per night
@@ -918,19 +918,27 @@ function StayList({
             type="search"
             value={query}
             onChange={(event) => onQueryChange(event.target.value)}
-            placeholder="Search hotels, houses, guesthouses…"
+            placeholder="Search hotels, resorts, houses…"
             className="w-full rounded-full border border-border bg-background px-4 py-2 text-sm outline-none transition focus:border-accent"
           />
         </label>
-        <div className="space-y-1.5">
-          <p className="text-xs text-muted">Stay type</p>
-          <ChipFilter
-            label="Stay type"
+        <label className="block space-y-1.5">
+          <span className="text-xs text-muted">Stay type</span>
+          <select
             value={stayKind}
-            onChange={onStayKindChange}
-            options={STAY_KIND_FILTERS}
-          />
-        </div>
+            onChange={(event) =>
+              onStayKindChange(event.target.value as StayKind | "all")
+            }
+            aria-label="Stay type"
+            className="w-full rounded-full border border-border bg-background px-4 py-2 text-sm outline-none transition focus:border-accent"
+          >
+            {STAY_KIND_FILTERS.map((option) => (
+              <option key={option.id} value={option.id}>
+                {option.label}
+              </option>
+            ))}
+          </select>
+        </label>
         <div className="space-y-1.5">
           <p className="text-xs text-muted">Stay price</p>
           <PriceFilter
@@ -985,6 +993,9 @@ function StayList({
                       {formatTravelAway(stay.distanceKm)} ·{" "}
                       {stayLayoutLabel(stay)}
                     </p>
+                    {stay.note ? (
+                      <p className="mt-1 text-sm text-muted">{stay.note}</p>
+                    ) : null}
                     <p className="mt-1 text-sm">
                       {formatZar(
                         stayTotalCents(stay.nightlyCents, unitCount, stay.nights),

@@ -156,6 +156,31 @@ db.exec(`
 
   CREATE INDEX IF NOT EXISTS login_attempts_subject ON login_attempts(subject);
   CREATE INDEX IF NOT EXISTS login_attempts_createdAt ON login_attempts(createdAt);
+
+  CREATE TABLE IF NOT EXISTS recovery_tokens (
+    id TEXT PRIMARY KEY,
+    userId TEXT NOT NULL,
+    purpose TEXT NOT NULL,
+    tokenHash TEXT NOT NULL UNIQUE,
+    expiresAt TEXT NOT NULL,
+    usedAt TEXT,
+    createdAt TEXT NOT NULL,
+    FOREIGN KEY (userId) REFERENCES users(id) ON DELETE CASCADE
+  );
+
+  CREATE INDEX IF NOT EXISTS recovery_tokens_userId ON recovery_tokens(userId);
+  CREATE INDEX IF NOT EXISTS recovery_tokens_expiresAt ON recovery_tokens(expiresAt);
+
+  CREATE TABLE IF NOT EXISTS recovery_mail (
+    id TEXT PRIMARY KEY,
+    toEmail TEXT NOT NULL,
+    subject TEXT NOT NULL,
+    body TEXT NOT NULL,
+    purpose TEXT NOT NULL,
+    createdAt TEXT NOT NULL
+  );
+
+  CREATE INDEX IF NOT EXISTS recovery_mail_createdAt ON recovery_mail(createdAt);
 `);
 
 {
@@ -263,6 +288,17 @@ seedStays(db);
   ) {
     db.exec(
       `ALTER TABLE booking_places ADD COLUMN ticketChannel TEXT NOT NULL DEFAULT 'online'`,
+    );
+  }
+}
+
+{
+  const columns = db.prepare(`PRAGMA table_info(users)`).all() as {
+    name: string;
+  }[];
+  if (!columns.some((column) => column.name === "sessionVersion")) {
+    db.exec(
+      `ALTER TABLE users ADD COLUMN sessionVersion INTEGER NOT NULL DEFAULT 0`,
     );
   }
 }

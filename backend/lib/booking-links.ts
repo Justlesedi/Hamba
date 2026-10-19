@@ -361,7 +361,8 @@ export function stayHandoff(
 ): BookingHandoff {
   const adults = Math.max(1, trip.travellers);
   const units = Math.max(1, trip.units);
-  const unitWord = stay.kind === "house" ? "house" : "room";
+  const unitWord =
+    stay.kind === "house" ? "house" : stay.kind === "resort" ? "chalet" : "room";
   const carries = tripCarry({
     checkIn: trip.checkIn,
     checkOut: trip.checkOut,

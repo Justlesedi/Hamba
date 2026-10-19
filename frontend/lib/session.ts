@@ -1,4 +1,5 @@
 import { cookies } from "next/headers";
+import { getSessionVersion } from "@backend/lib/auth";
 import { decrypt, encrypt } from "./session-token";
 
 const SESSION_COOKIE = "session";
@@ -9,6 +10,7 @@ export async function createSession(userId: string) {
   const session = encrypt({
     userId,
     expiresAt: expiresAt.toISOString(),
+    sessionVersion: getSessionVersion(userId) ?? 0,
   });
   const cookieStore = await cookies();
 
@@ -28,5 +30,19 @@ export async function deleteSession() {
 
 export async function readSession() {
   const cookieStore = await cookies();
-  return decrypt(cookieStore.get(SESSION_COOKIE)?.value);
+  const payload = await decrypt(cookieStore.get(SESSION_COOKIE)?.value);
+  if (!payload?.userId) {
+    return null;
+  }
+
+  const sessionVersion = getSessionVersion(payload.userId);
+  if (sessionVersion == null) {
+    return null;
+  }
+
+  if ((payload.sessionVersion ?? 0) !== sessionVersion) {
+    return null;
+  }
+
+  return payload;
 }

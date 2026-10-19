@@ -17,6 +17,25 @@ export const signInSchema = z.object({
   password: z.string().min(1, "Password is required."),
 });
 
+export const recoverPasswordSchema = z.object({
+  email: z.string().trim().email("Enter a valid email address."),
+});
+
+export const recoverEmailSchema = z.object({
+  name: z.string().trim().min(2, "Name must be at least 2 characters."),
+});
+
+export const resetPasswordSchema = z
+  .object({
+    token: z.string().trim().min(1, "This link is missing."),
+    password: passwordSchema,
+    confirm: z.string().min(1, "Confirm the new password."),
+  })
+  .refine((data) => data.password === data.confirm, {
+    message: "Passwords do not match.",
+    path: ["confirm"],
+  });
+
 export const emailCheckSchema = z.object({
   email: z.string().trim().email("Enter a valid email address."),
 });
@@ -85,6 +104,35 @@ export type SignInFormState =
       errors?: {
         email?: string[];
         password?: string[];
+      };
+      message?: string;
+    }
+  | undefined;
+
+export type RecoverPasswordFormState =
+  | {
+      errors?: {
+        email?: string[];
+      };
+      message?: string;
+    }
+  | undefined;
+
+export type RecoverEmailFormState =
+  | {
+      errors?: {
+        name?: string[];
+      };
+      message?: string;
+    }
+  | undefined;
+
+export type ResetPasswordFormState =
+  | {
+      errors?: {
+        token?: string[];
+        password?: string[];
+        confirm?: string[];
       };
       message?: string;
     }

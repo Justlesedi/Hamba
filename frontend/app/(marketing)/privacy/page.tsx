@@ -24,15 +24,18 @@ export default function Page() {
           When you sign up we keep your name, email, and a hashed password.
           When you plan we keep trip names, destinations, dates, how many
           Guests, optional budgets, and the stays and places you confirm. Live
-          location is only used to place you on the map for that session.
+          location is only used to place you on the map for that session. If
+          you ask to recover an account, we send a short note to the email on
+          file. Reset links expire in 30 minutes.
         </p>
       </section>
       <section className="space-y-3">
         <h2 className="text-2xl">How we use it</h2>
         <p>
-          We use this to sign you in, show your trips, forecast a budget, and
-          build booking links with your dates and guests. We do not advertise
-          with it. We do not sell it.
+          We use this to sign you in, help you back in if the email or password
+          is lost, show your trips, forecast a budget, and build booking links
+          with your dates and guests. We do not advertise with it. We do not
+          sell it.
         </p>
       </section>
       <section className="space-y-3">

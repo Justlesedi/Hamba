@@ -14,11 +14,11 @@ function ipSubject(ip: string) {
   return `ip:${ip.trim()}`;
 }
 
-function pruneOldAttempts() {
+export function pruneOldAttempts() {
   db.prepare("DELETE FROM login_attempts WHERE createdAt < ?").run(windowStart());
 }
 
-function recentCount(subject: string) {
+export function recentCount(subject: string) {
   const row = db
     .prepare(
       "SELECT COUNT(*) AS count FROM login_attempts WHERE subject = ? AND createdAt >= ?",
@@ -27,7 +27,7 @@ function recentCount(subject: string) {
   return row.count;
 }
 
-function record(subject: string) {
+export function recordAttempt(subject: string) {
   db.prepare(
     "INSERT INTO login_attempts (id, subject, createdAt) VALUES (?, ?, ?)",
   ).run(randomUUID(), subject, new Date().toISOString());
@@ -43,9 +43,9 @@ export function isSignInBlocked(email: string, ip?: string) {
 
 export function recordSignInFailure(email: string, ip?: string) {
   pruneOldAttempts();
-  record(emailSubject(email));
+  recordAttempt(emailSubject(email));
   if (ip) {
-    record(ipSubject(ip));
+    recordAttempt(ipSubject(ip));
   }
 }
 

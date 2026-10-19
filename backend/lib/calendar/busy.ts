@@ -98,7 +98,7 @@ function listingBump(name: string, kind: BusyPlaceKind, stayKind?: string) {
   if (kind === "stay" && stayKind === "house") {
     bump += 0;
   }
-  if (kind === "stay" && stayKind === "hotel") {
+  if (kind === "stay" && (stayKind === "hotel" || stayKind === "resort")) {
     bump += 1;
   }
   if (/museum|gallery|library/.test(text)) {

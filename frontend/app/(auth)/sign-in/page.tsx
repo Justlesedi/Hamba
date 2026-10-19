@@ -7,10 +7,11 @@ export const metadata = { title: "Sign in" };
 export default async function Page({
   searchParams,
 }: {
-  searchParams: Promise<{ account?: string }>;
+  searchParams: Promise<{ account?: string; recovered?: string }>;
 }) {
-  const { account } = await searchParams;
+  const { account, recovered } = await searchParams;
   const existingAccount = account === "exists";
+  const recoveredPassword = recovered === "password";
 
   return (
     <div>
@@ -19,6 +20,10 @@ export default async function Page({
       {existingAccount ? (
         <p className="mt-2 mb-8 text-accent">
           An account with this email already exists. Sign in to continue.
+        </p>
+      ) : recoveredPassword ? (
+        <p className="mt-2 mb-8 text-accent">
+          Your password is new. Sign in with it.
         </p>
       ) : (
         <p className="mt-2 mb-8 text-muted">
@@ -30,6 +35,10 @@ export default async function Page({
         New here?{" "}
         <Link href="/sign-up" className="font-medium text-foreground">
           Create an account
+        </Link>
+        {" · "}
+        <Link href="/recover" className="font-medium text-foreground">
+          Forgot email or password?
         </Link>
       </p>
       <p className="mt-8 text-xs text-muted">

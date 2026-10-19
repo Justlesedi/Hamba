@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useActionState } from "react";
 import { signIn } from "@/app/actions/auth";
 import { Button } from "@/components/ui/button";
@@ -24,6 +25,11 @@ export function SignInForm() {
         autoComplete="current-password"
         error={state?.errors?.password?.[0]}
       />
+      <p className="-mt-2 text-sm text-muted">
+        <Link href="/recover" className="font-medium text-foreground">
+          Forgot email or password?
+        </Link>
+      </p>
       {state?.message ? (
         <p className="text-sm text-accent">{state.message}</p>
       ) : null}

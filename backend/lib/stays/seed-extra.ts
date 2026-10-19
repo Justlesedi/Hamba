@@ -55,6 +55,18 @@ function mix(
       guest.zar,
       guest.note,
     ),
+    stay(
+      `stay_${slug}_resort`,
+      `${city} Resort`,
+      lat + 0.012,
+      lng - 0.008,
+      `${city} Resort`,
+      city,
+      "resort",
+      6,
+      Math.round(hotel.zar * 1.35),
+      `Kitchen, outdoor braai, and a shared resort pool.`,
+    ),
   ];
 }
 

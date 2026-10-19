@@ -36,6 +36,7 @@ const STAY_KINDS = new Set<StayKind>([
   "lodge",
   "camp",
   "apartment",
+  "resort",
 ]);
 
 function mapStay(row: StayRow): Stay {

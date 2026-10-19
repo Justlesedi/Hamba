@@ -40,3 +40,27 @@ export function getUserById(id: string): PublicUser | null {
 
   return user ? toPublicUser(user) : null;
 }
+
+export function findUsersByName(name: string) {
+  return db
+    .prepare(
+      "SELECT id, email, passwordHash, name, createdAt FROM users WHERE lower(name) = lower(?)",
+    )
+    .all(name.trim()) as UserRow[];
+}
+
+export function getSessionVersion(userId: string) {
+  const row = db
+    .prepare("SELECT sessionVersion FROM users WHERE id = ?")
+    .get(userId) as { sessionVersion: number } | undefined;
+  return row ? row.sessionVersion : null;
+}
+
+export async function replacePassword(userId: string, password: string) {
+  const now = new Date().toISOString();
+  db.prepare(
+    `UPDATE users
+     SET passwordHash = ?, sessionVersion = sessionVersion + 1, updatedAt = ?
+     WHERE id = ?`,
+  ).run(await hashPassword(password), now, userId);
+}

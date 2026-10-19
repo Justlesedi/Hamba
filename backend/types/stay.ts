@@ -6,7 +6,8 @@ export type StayKind =
   | "guesthouse"
   | "lodge"
   | "camp"
-  | "apartment";
+  | "apartment"
+  | "resort";
 
 export const STAY_KIND_FILTERS: Array<{
   id: StayKind | "all";
@@ -14,6 +15,7 @@ export const STAY_KIND_FILTERS: Array<{
 }> = [
   { id: "all", label: "All stays" },
   { id: "hotel", label: "Hotels" },
+  { id: "resort", label: "Resorts" },
   { id: "guesthouse", label: "Guesthouses" },
   { id: "house", label: "Houses" },
   { id: "apartment", label: "Apartments" },
@@ -37,6 +39,9 @@ export function stayKindLabel(kind: StayKind) {
   if (kind === "apartment") {
     return "Apartment";
   }
+  if (kind === "resort") {
+    return "Resort";
+  }
   return "Hotel";
 }
 
@@ -47,17 +52,28 @@ export function stayUnitNoun(
   if (kind === "house") {
     return count === 1 ? "house" : "houses";
   }
+  if (kind === "resort") {
+    return count === 1 ? "chalet" : "chalets";
+  }
   return count === 1 ? "room" : "rooms";
 }
 
 export function stayUnitHeading(kind: StayKind | null | undefined) {
-  return kind === "house" ? "Houses" : "Rooms";
+  if (kind === "house") {
+    return "Houses";
+  }
+  if (kind === "resort") {
+    return "Chalets";
+  }
+  return "Rooms";
 }
 
 export function stayCapacity(kind: StayKind, sleeps: number) {
   const beds = Math.max(1, sleeps);
   const rooms =
-    kind === "house" ? Math.max(1, Math.round(sleeps / 2)) : 1;
+    kind === "house" || kind === "resort"
+      ? Math.max(1, Math.round(sleeps / 2))
+      : 1;
   return { beds, rooms };
 }
 
@@ -65,9 +81,15 @@ export function stayLayoutLabel(stay: {
   kind: StayKind;
   beds: number;
   rooms: number;
+  sleeps?: number;
 }) {
   if (stay.kind === "house") {
     return stay.rooms === 1 ? "1 room" : `${stay.rooms} rooms`;
+  }
+  if (stay.kind === "resort") {
+    const sleeps = stay.sleeps ?? stay.beds;
+    const bedrooms = stay.rooms === 1 ? "1 bedroom" : `${stay.rooms} bedrooms`;
+    return `Self-catering chalet · sleeps ${sleeps} · ${bedrooms}`;
   }
   return stay.beds === 1 ? "1 bed per room" : `${stay.beds} beds per room`;
 }

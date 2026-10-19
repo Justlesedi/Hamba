@@ -14,7 +14,11 @@ export { getUserById };
 export class AuthError extends Error {
   constructor(
     message: string,
-    readonly code: "EMAIL_TAKEN" | "INVALID_CREDENTIALS" | "RATE_LIMITED",
+    readonly code:
+      | "EMAIL_TAKEN"
+      | "INVALID_CREDENTIALS"
+      | "RATE_LIMITED"
+      | "INVALID_TOKEN",
   ) {
     super(message);
     this.name = "AuthError";

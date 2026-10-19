@@ -3,6 +3,7 @@ import { createHmac, timingSafeEqual } from "node:crypto";
 export type SessionPayload = {
   userId: string;
   expiresAt: string;
+  sessionVersion?: number;
 };
 
 function secret() {
