@@ -100,7 +100,7 @@ function ForecastResults({
           </p>
         </div>
         <div>
-          <p className="text-sm text-muted">Your plan</p>
+          <p className="text-sm text-muted">Estimated cost</p>
           <p className="mt-1 text-lg font-semibold">
             {formatZar(forecast.plannedTotalCents)}
           </p>

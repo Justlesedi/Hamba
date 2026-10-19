@@ -18,10 +18,6 @@ export default function Page() {
         <Link href="/sign-in" className="font-medium text-foreground">
           Sign in
         </Link>
-        {" · "}
-        <Link href="/recover" className="font-medium text-foreground">
-          Forgot email or password?
-        </Link>
       </p>
       <p className="mt-8 text-xs text-muted">
         <Link href="/">Home</Link>
