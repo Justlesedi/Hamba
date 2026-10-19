@@ -11,13 +11,23 @@ function repoRoot() {
   return process.cwd();
 }
 
-const dataDir = path.join(repoRoot(), "backend/data");
+const dataDir = process.env.HAMBA_DATA_DIR
+  ? path.resolve(process.env.HAMBA_DATA_DIR)
+  : path.join(repoRoot(), "backend/data");
 fs.mkdirSync(dataDir, { recursive: true });
 
-export const db = new DatabaseSync(path.join(dataDir, "hamba.db"));
-db.exec("PRAGMA journal_mode = WAL");
-db.exec("PRAGMA busy_timeout = 5000");
-db.exec("PRAGMA synchronous = NORMAL");
+const isNextProductionBuild =
+  process.env.NEXT_PHASE === "phase-production-build";
+const dbPath = isNextProductionBuild
+  ? ":memory:"
+  : path.join(dataDir, "hamba.db");
+
+export const db = new DatabaseSync(dbPath, { timeout: 60_000 });
+if (!isNextProductionBuild) {
+  db.exec("PRAGMA journal_mode = WAL");
+  db.exec("PRAGMA busy_timeout = 5000");
+  db.exec("PRAGMA synchronous = NORMAL");
+}
 
 db.exec(`
   CREATE TABLE IF NOT EXISTS users (
